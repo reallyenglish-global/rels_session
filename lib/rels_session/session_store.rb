@@ -1,25 +1,33 @@
 module RelsSession
+  require 'action_dispatch'
+
   class SessionStore < ActionDispatch::Session::AbstractSecureStore
     CLIENT_APPLICATIONS = %w/Rex Turtle WmApi Wfb N2r/
 
     DEFAULT_OPTIONS = {
       key: 'rels_session',
-      expires_after: 2.hours
+      expires_after: 7200
     }
 
     def initialize(app, options = {})
       options = DEFAULT_OPTIONS.merge(options)
-      @redis = AuthService.redis
+
+      @redis = redis
 
       @redis.then do |r|
-        r.sadd(shared_context_key, Rails.application.class.name.split("::").first)
+        r.sadd(shared_context_key, Settings.session_store.application_name || Rails.application.class.name.split("::").first)
       end
 
       @ttl = options.fetch(:expires_after)
-      @namespace = AuthService.namespace
+      @namespace = RelsSession.namespace
 
       super
     end
+    
+    def redis
+      @redis ||= RelsSession.redis
+    end
+
 
     def find_session(_, session_id)
       unless session_id && (session = get_session(session_id))

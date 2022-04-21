@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-RSpec.describe RelsSession do
-  it "has a version number" do
-    expect(RelsSession::VERSION).not_to be nil
-  end
+RSpec.describe RelsSession::SessionStore do
+  describe '#new' do
+    subject(:new) { described_class.new(Settings.to_hash) }
 
-  describe '.namespage' do
-    subject(:namespace) { described_class.namespace }
+    describe '.redis' do
+      subject(:redis) { new.redis }
 
-    it 'defaults to rels:session' do
-      expect(namespace).to eq('rels:session')
+      it 'returns redis instance' do
+        expect(redis).not_to be nil
+      end
     end
   end
 end

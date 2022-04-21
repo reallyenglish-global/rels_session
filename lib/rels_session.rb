@@ -1,6 +1,12 @@
 # frozen_string_literal: true
+#
+require 'dry-struct'
+require 'redis'
+require 'connection_pool'
+require 'action_dispatch'
 
 require_relative "rels_session/version"
+require_relative 'rels_session/types'
 require_relative 'rels_session/session_store'
 require_relative 'rels_session/session_meta'
 require_relative 'rels_session/sessions_manager'
@@ -27,8 +33,34 @@ module RelsSession
       namespace: 'rels_session'
     }.freeze
 
+    def redis
+      @redis ||= pool
+    end
+
     def namespace
-      DEFAULT_REDIS_OPTIONS.fetch(:namespace)
+      Settings.session_store.redis_options.namespace || DEFAULT_REDIS_OPTIONS.fetch(:namespace)
+    end
+
+    def pool
+      ConnectionPool.new(pool_options) do
+        ::Redis.new(redis_options)
+      end
+    end
+
+    def pool_options
+      DEFAULT_POOL_OPTIONS.merge(
+        Settings.session_store.connection_pool_options || {}
+      )
+    end
+
+    def redis_options
+      uri = URI(Settings.session_store.redis_options.url)
+      if uri.scheme == 'redis+sentinel'
+        Settings.session_store.redis_options.url = "redis:/#{uri.path}"
+        Settings.session_store.redis_options.sentinels = [{host: uri.host, port: uri.port}]
+      end
+
+      DEFAULT_REDIS_OPTIONS.merge(Settings.session_store.redis_options || {})
     end
   end
 end
