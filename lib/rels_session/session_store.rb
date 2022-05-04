@@ -15,7 +15,9 @@ module RelsSession
       @redis = redis
 
       @redis.then do |r|
-        r.sadd(shared_context_key, Settings.session_store.application_name || Rails.application.class.name.split("::").first)
+        r.sadd(
+          shared_context_key, application_name
+        )
       end
 
       @ttl = options.fetch(:expires_after)
@@ -23,7 +25,7 @@ module RelsSession
 
       super
     end
-    
+
     def redis
       @redis ||= RelsSession.redis
     end
@@ -35,7 +37,7 @@ module RelsSession
         session = '{}'
       end
 
-      [session_id, JSON.parse(session).deep_symbolize_keys.with_indifferent_access]
+      [session_id, JSON.parse(session).deep_symbolize_keys]
     end
 
     def write_session(_, session_id, session, _)
@@ -61,6 +63,10 @@ module RelsSession
     end
 
     private
+
+    def application_name
+      Settings.session_store.application_name || Rails.application.class.name.split("::").first
+    end
 
     def get_session(session_id)
       @redis.then do |r|

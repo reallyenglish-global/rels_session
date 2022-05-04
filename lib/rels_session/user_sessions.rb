@@ -2,7 +2,8 @@ class RelsSession::UserSessions
   def initialize(user_uuid)
     @key = [RelsSession.namespace, 'user_sessions', user_uuid].join(":")
     @redis = RelsSession.redis
-    @ttl = 2.weeks
+    #Two weeks
+    @ttl = 2*7*24*60*60
   end
 
   def add(session_id)

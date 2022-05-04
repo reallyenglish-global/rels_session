@@ -3,9 +3,7 @@ module RelsSession
     def initialize(user)
       @user = user
       @user_sessions = RelsSession::UserSessions.new(user.uuid)
-      @session_store = RelsSession::SessionStore.new(
-        nil, Rails.configuration.session_options
-      )
+      @session_store = RelsSession::SessionStore.new(nil, {})
     end
 
     def logout_session(session_id)

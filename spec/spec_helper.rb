@@ -28,6 +28,19 @@ unless defined? Settings
 end
 
 RSpec.configure do |config|
+  config.before(:suite) do
+    raise 'Test redis only' unless RelsSession.namespace == 'test:session:namespace'
+
+    RelsSession.redis.then do |r|
+      r.flushall
+    end
+  end
+
+  config.append_after(:each) do
+    RelsSession.redis.then do |r|
+      r.flushall
+    end
+  end
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"
 
