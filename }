@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+RSpec.describe RelsSession::SessionStore do
+  describe '#find_session' do
+    subject(:find_session) { described_class.new(nil, {}).find_session }
+    it 'is set by the Settings' do
+      expect(namespace).to eq('test:session:namespace')
+    end
+  end
+end
+

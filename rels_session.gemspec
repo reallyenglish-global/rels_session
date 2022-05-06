@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'actionpack', '>= 6.1.4.6', '< 8'
+  spec.add_runtime_dependency 'actionpack', '>= 7.0.2.4', '< 8'
   spec.add_runtime_dependency 'redis', '>= 4', '< 5'
   spec.add_runtime_dependency 'dry-struct', '>= 1.4.0'
   spec.add_runtime_dependency 'device_detector', '>= 1.0.7'

@@ -26,18 +26,13 @@ module RelsSession
       super
     end
 
-    def redis
-      @redis ||= RelsSession.redis
-    end
-
-
     def find_session(_, session_id)
       unless session_id && (session = get_session(session_id))
         session_id = generate_sid
         session = '{}'
       end
 
-      [session_id, JSON.parse(session).deep_symbolize_keys]
+      [session_id, JSON.parse(session)]
     end
 
     def write_session(_, session_id, session, _)
@@ -63,6 +58,10 @@ module RelsSession
     end
 
     private
+
+    def redis
+      @redis ||= RelsSession.redis
+    end
 
     def application_name
       Settings.session_store.application_name || Rails.application.class.name.split("::").first
