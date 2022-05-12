@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 module RelsSession
+  # View and manage Reallyenglish user sessions.
   class SessionsManager
     def initialize(user)
       @user = user
@@ -7,9 +10,7 @@ module RelsSession
     end
 
     def logout_session(session_id)
-      if user_sessions.remove(session_id.public_id)
-        @session_store.delete_session(nil, session_id, nil)
-      end
+      @session_store.delete_session(nil, session_id, nil) if user_sessions.remove(session_id.public_id)
     end
 
     def logout_all_sessions
@@ -35,9 +36,9 @@ module RelsSession
     private
 
     def user_session_ids
-      user_sessions.list.map {|public_id|
+      user_sessions.list.map do |public_id|
         Rack::Session::SessionId.new(public_id)
-      }
+      end
     end
 
     attr_reader :user, :user_sessions
@@ -74,6 +75,7 @@ module RelsSession
           created_at: user.current_sign_in_at || Time.zone.now,
           updated_at: Time.zone.now
         )
+
         session[:meta] = meta
         session[:user_uuid] = user.id
 
@@ -86,4 +88,3 @@ module RelsSession
     end
   end
 end
-

@@ -1,13 +1,14 @@
-module RelsSession
-  require 'action_dispatch'
+# frozen_string_literal: true
 
+module RelsSession
+  # Drop in session store for Reallyenglish rails apps.
   class SessionStore < ActionDispatch::Session::AbstractSecureStore
-    CLIENT_APPLICATIONS = %w/Rex Turtle WmApi Wfb N2r/
+    CLIENT_APPLICATIONS = %w[Rex Turtle WmApi Wfb N2r].freeze
 
     DEFAULT_OPTIONS = {
-      key: 'rels_session',
+      key: "rels_session",
       expires_after: 7200
-    }
+    }.freeze
 
     def initialize(app, options = {})
       options = DEFAULT_OPTIONS.merge(options)
@@ -29,7 +30,7 @@ module RelsSession
     def find_session(_, session_id)
       unless session_id && (session = get_session(session_id))
         session_id = generate_sid
-        session = '{}'
+        session = "{}"
       end
 
       [session_id, JSON.parse(session)]
@@ -43,7 +44,7 @@ module RelsSession
           @redis.then { |r| r.set(key, session.to_json, ex: @ttl) }
         end
       else
-        @redis.then {|r| r.del(*keys) }
+        @redis.then { |r| r.del(*keys) }
       end
 
       session_id
@@ -74,7 +75,7 @@ module RelsSession
     end
 
     def store_key(id)
-      [@namespace, id].join(':')
+      [@namespace, id].join(":")
     end
 
     def store_keys(session_id)
@@ -83,16 +84,16 @@ module RelsSession
       # Favour lookup on public_key until secure_store suported_by_all?
       ids.reverse unless secure_store?
 
-      ids.map {|id| store_key(id)}
+      ids.map { |id| store_key(id) }
     end
 
     def secure_store?
-      using_secure_store = @redis.then {|r| r.smembers(shared_context_key)}
+      using_secure_store = @redis.then { |r| r.smembers(shared_context_key) }
       (CLIENT_APPLICATIONS - using_secure_store).empty?
     end
 
     def shared_context_key
-      [@namespace, Rack::Session::SessionId::ID_VERSION, "active_applications"].join(':')
+      [@namespace, Rack::Session::SessionId::ID_VERSION, "active_applications"].join(":")
     end
   end
 end

@@ -1,17 +1,18 @@
 # frozen_string_literal: true
-#
-require 'dry-struct'
-require 'redis'
-require 'connection_pool'
-require 'action_dispatch'
+
+require "dry-struct"
+require "redis"
+require "connection_pool"
+require "action_dispatch"
 
 require_relative "rels_session/version"
-require_relative 'rels_session/types'
-require_relative 'rels_session/session_store'
-require_relative 'rels_session/session_meta'
-require_relative 'rels_session/sessions_manager'
-require_relative 'rels_session/user_sessions'
+require_relative "rels_session/types"
+require_relative "rels_session/session_store"
+require_relative "rels_session/session_meta"
+require_relative "rels_session/sessions_manager"
+require_relative "rels_session/user_sessions"
 
+# Connect and manage user sessions across RE rails apps.
 module RelsSession
   class Error < StandardError; end
 
@@ -26,11 +27,11 @@ module RelsSession
       read_timeout: 1,
       write_timeout: 1,
       reconnect_attempts: 1,
-      namespace: 'rels:session'
+      namespace: "rels:session"
     }.freeze
 
     DEFAULT_SESSION_OPTIONS = {
-      namespace: 'rels_session'
+      namespace: "rels_session"
     }.freeze
 
     def redis
@@ -54,13 +55,16 @@ module RelsSession
     end
 
     def redis_options
+      opts = DEFAULT_REDIS_OPTIONS.merge(Settings.session_store.redis_options)
+
       uri = URI(Settings.session_store.redis_options.url)
-      if uri.scheme == 'redis+sentinel'
-        Settings.session_store.redis_options.url = "redis:/#{uri.path}"
-        Settings.session_store.redis_options.sentinels = [{host: uri.host, port: uri.port}]
+
+      if uri.scheme == "redis+sentinel"
+        opts[:url] = "redis:/#{uri.path}"
+        opts[:sentinels] = [{ host: uri.host, port: uri.port }]
       end
 
-      DEFAULT_REDIS_OPTIONS.merge(Settings.session_store.redis_options || {})
+      opts
     end
   end
 end

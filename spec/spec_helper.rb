@@ -2,15 +2,17 @@
 
 require "rels_session"
 
-class RelsSession::SettingsStruct < Dry::Struct
-  attribute :session_store do
-    attribute :application_name, RelsSession::Types::String.enum(*RelsSession::SessionStore::CLIENT_APPLICATIONS)
-    attribute :redis_options do
-      attribute :url, RelsSession::Types::String
-      attribute :namespace, RelsSession::Types::String
-    end
+module RelsSession
+  class SettingsStruct < Dry::Struct
+    attribute :session_store do
+      attribute :application_name, RelsSession::Types::String.enum(*RelsSession::SessionStore::CLIENT_APPLICATIONS)
+      attribute :redis_options do
+        attribute :url, RelsSession::Types::String
+        attribute :namespace, RelsSession::Types::String
+      end
 
-    attribute? :connection_pool_options do
+      attribute? :connection_pool_options do
+      end
     end
   end
 end
@@ -18,10 +20,10 @@ end
 unless defined? Settings
   Settings = RelsSession::SettingsStruct.new(
     session_store: {
-      application_name: 'Turtle',
+      application_name: "Turtle",
       redis_options: {
-        url: ENV['REDIS_URL'] || 'redis://localhost:6379/4',
-        namespace: ENV['REDIS_NAMESPACE'] || 'test:session:namespace'
+        url: ENV["REDIS_URL"] || "redis://localhost:6379/4",
+        namespace: ENV["REDIS_NAMESPACE"] || "test:session:namespace"
       }
     }
   )
@@ -29,17 +31,13 @@ end
 
 RSpec.configure do |config|
   config.before(:suite) do
-    raise 'Test redis only' unless RelsSession.namespace == 'test:session:namespace'
+    raise "Test redis only" unless RelsSession.namespace == "test:session:namespace"
 
-    RelsSession.redis.then do |r|
-      r.flushall
-    end
+    RelsSession.redis.then(&:flushall)
   end
 
   config.append_after(:each) do
-    RelsSession.redis.then do |r|
-      r.flushall
-    end
+    RelsSession.redis.then(&:flushall)
   end
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = ".rspec_status"

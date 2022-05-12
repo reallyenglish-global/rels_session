@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "lib/rels_session/version"
 
 Gem::Specification.new do |spec|
@@ -25,16 +27,16 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'actionpack', '>= 7.0.2.4', '< 8'
-  spec.add_runtime_dependency 'redis', '>= 4', '< 5'
-  spec.add_runtime_dependency 'dry-struct', '>= 1.4.0'
-  spec.add_runtime_dependency 'device_detector', '>= 1.0.7'
-  spec.add_runtime_dependency 'connection_pool', '>= 2.2.5', '< 3'
+  spec.add_runtime_dependency "actionpack", ">= 7.0.2.4", "< 8"
+  spec.add_runtime_dependency "connection_pool", ">= 2.2.5", "< 3"
+  spec.add_runtime_dependency "device_detector", ">= 1.0.7"
+  spec.add_runtime_dependency "dry-struct", ">= 1.4.0"
+  spec.add_runtime_dependency "redis", ">= 4", "< 5"
 
-  spec.add_development_dependency 'rake', '~> 13'
-  spec.add_development_dependency 'rspec', '~> 3'
-  spec.add_development_dependency 'rubocop', '~> 1.27'
-  spec.add_development_dependency 'rubocop-rake', '~> 0.6'
-  spec.add_development_dependency 'rubocop-rspec', '~> 2.8'
-  spec.add_development_dependency 'database_cleaner-redis'
+  spec.add_development_dependency "database_cleaner-redis"
+  spec.add_development_dependency "rake", "~> 13"
+  spec.add_development_dependency "rspec", "~> 3"
+  spec.add_development_dependency "rubocop", "~> 1.27"
+  spec.add_development_dependency "rubocop-rake", "~> 0.6"
+  spec.add_development_dependency "rubocop-rspec", "~> 2.8"
 end
