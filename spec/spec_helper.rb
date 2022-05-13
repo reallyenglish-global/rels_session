@@ -18,14 +18,16 @@ module RelsSession
 end
 
 unless defined? Settings
-  Settings = RelsSession::SettingsStruct.new(
-    session_store: {
-      application_name: "Turtle",
-      redis_options: {
-        url: ENV["REDIS_URL"] || "redis://localhost:6379/4",
-        namespace: ENV["REDIS_NAMESPACE"] || "test:session:namespace"
-      }
+  store_config = {
+    application_name: "Turtle",
+    redis_options: {
+      url: ENV["REDIS_URL"] || "redis://localhost:6379/4",
+      namespace: ENV["REDIS_NAMESPACE"] || "test:session:namespace"
     }
+  }
+
+  Settings = RelsSession::SettingsStruct.new(
+    session_store: RelsSession::SessionStoreConfigSchema.call(store_config).to_h
   )
 end
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "dry-struct"
+require "dry-schema"
 require "redis"
 require "connection_pool"
 require "action_dispatch"
@@ -65,6 +66,14 @@ module RelsSession
       end
 
       opts
+    end
+  end
+
+  SessionStoreConfigSchema = Dry::Schema.Params do
+    optional(:application_name).filled(:string)
+    required(:redis_options).hash do
+      required(:url).filled(:string)
+      required(:namespace).filled(:string)
     end
   end
 end
