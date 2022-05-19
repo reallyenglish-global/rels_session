@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "device_detector"
+
 module RelsSession
   # View and manage Reallyenglish user sessions.
   class SessionsManager
@@ -60,7 +62,7 @@ module RelsSession
         end
       end
 
-      def record_authenticated_request(user, request)
+      def record_authenticated_request(user, request, options = {})
         device = DeviceDetector.new(request.user_agent)
         session = request.session
 
@@ -72,12 +74,11 @@ module RelsSession
           device_type: device.device_type,
           public_session_id: request.session.id.public_id,
           session_key_type: :cookie,
-          created_at: user.current_sign_in_at || Time.zone.now,
+          created_at: options.fetch(:sign_in_at, nil),
           updated_at: Time.zone.now
         )
 
         session[:meta] = meta
-        session[:user_uuid] = user.id
 
         RelsSession::UserSessions.new(user.uuid).add(request.session.id.public_id)
       end

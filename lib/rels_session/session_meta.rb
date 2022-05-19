@@ -10,7 +10,7 @@ module RelsSession
     attribute :device_type, Types::String.optional
     attribute :public_session_id, Types::Coercible::String
     attribute :session_key_type, Types::Coercible::Symbol.enum(*%i[cookie token])
-    attribute :created_at, Types::Params::Time
+    attribute :created_at, Types::Params::Time.optional
     attribute :updated_at, Types::Params::Time
   end
 end
