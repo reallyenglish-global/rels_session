@@ -7,7 +7,7 @@ module RelsSession
 
     DEFAULT_OPTIONS = {
       key: "rels_session",
-      expires_after: 7200
+      expires_after: 2 * 7 * 24 * 60 * 60
     }.freeze
 
     def initialize(app, options = {})
