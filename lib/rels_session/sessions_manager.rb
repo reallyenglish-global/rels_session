@@ -63,7 +63,9 @@ module RelsSession
       end
 
       def record_authenticated_request(user, request, options = {})
-        device = DeviceDetector.new(request.user_agent)
+        # nil user_agent blow up specs with DeviceDetector 1.1.0
+        # https://github.com/podigee/device_detector/issues/104
+        device = DeviceDetector.new(request.user_agent || "")
         session = request.session
 
         meta = RelsSession::SessionMeta.new(
