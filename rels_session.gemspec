@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "device_detector", ">= 1.0.7"
   spec.add_runtime_dependency "dry-schema", ">= 1.4.0"
   spec.add_runtime_dependency "dry-struct", ">= 1.4.0"
-  spec.add_runtime_dependency "redis", ">= 4", "< 5"
+  spec.add_runtime_dependency "redis", ">= 4.8", "< 5"
 
   spec.add_development_dependency "database_cleaner-redis"
   spec.add_development_dependency "rake", "~> 13"
