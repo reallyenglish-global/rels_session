@@ -13,7 +13,7 @@ module RelsSession
     def add(session_id)
       @redis.then do |r|
         r.multi do |m|
-          m.sadd(key, session_id)
+          m.sadd?(key, session_id)
           m.expire(key, @ttl)
         end
       end
