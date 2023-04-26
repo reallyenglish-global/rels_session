@@ -3,6 +3,7 @@
 require "dry-struct"
 require "dry-schema"
 require "redis"
+require 'redis-namespace'
 require "connection_pool"
 require "action_dispatch"
 
@@ -44,8 +45,11 @@ module RelsSession
     end
 
     def pool
+      options = redis_options
+      namespace = options.delete(:namespace)
       ConnectionPool.new(pool_options) do
-        ::Redis.new(redis_options)
+        redis_connection = ::Redis.new(options)
+        Redis::Namespace.new(namespace, redis: redis_connection)
       end
     end
 
