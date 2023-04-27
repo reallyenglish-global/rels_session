@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        redis-version: [5]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1.138.0
+        with:
+          ruby-version: 3.2.0
+          bundler-cache: true
+
+      - name: Install Dependencies
+        run: |
+          sudo apt install -yqq build-essential
+          gem install bundler
+
+      - name: Redis Server in GitHub Actions
+        uses: supercharge/redis-github-action@1.5.0
+        with:
+          redis-version: ${{ matrix.redis-version }}
+
+      - name: Build and test with rspec
+        run: |
+          bundle exec rspec
