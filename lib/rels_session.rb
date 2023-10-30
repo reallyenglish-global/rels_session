@@ -65,7 +65,11 @@ module RelsSession
       uri = URI(Settings.session_store.redis_options.url)
 
       if uri.scheme == "redis+sentinel"
-        opts[:url] = "redis:/#{uri.path}"
+        path = uri.path
+        _, name, db = path.split("/")
+        opts[:name] = name
+        opts[:db] = db
+        opts[:url] = "redis:/#{path}"
         opts[:sentinels] = [{ host: uri.host, port: uri.port }]
       end
 
