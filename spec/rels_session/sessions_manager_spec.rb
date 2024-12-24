@@ -64,6 +64,16 @@ RSpec.describe RelsSession::SessionsManager do
     end
   end
 
+  describe ".record_authenticated_request" do
+    let(:request) { double(user_agent: "Chrome", ip: "212.139.254.49", session: double(id: active_session_id, :[]= => nil)) }
+    it "logs user out of all sessions" do
+      allow(RelsSession::UserSessions).to receive(:new).and_return(double(add: nil))
+      allow(Time).to receive(:zone).and_return(Time)
+      described_class.record_authenticated_request(user, request, expires_after: 45)
+      expect(RelsSession::UserSessions).to have_received(:new).with(user.uuid, expires_after: 45)
+    end
+  end
+
   def setup_sessions
     devise_session = { "meta" => active_session_meta.to_h }
 

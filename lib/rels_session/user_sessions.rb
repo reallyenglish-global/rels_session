@@ -3,11 +3,11 @@
 module RelsSession
   # Add and remove user sessions, outside of rails app. Used by session_store
   class UserSessions
-    def initialize(user_uuid)
+    def initialize(user_uuid, options = {})
       @key = [RelsSession.namespace, "user_sessions", user_uuid].join(":")
       @redis = RelsSession.redis
-      # Two weeks
-      @ttl = 2 * 7 * 24 * 60 * 60
+      # Two weeks by default
+      @ttl = options.fetch(:expires_after, 2 * 7 * 24 * 60 * 60)
     end
 
     def add(session_id)

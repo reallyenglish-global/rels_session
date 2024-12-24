@@ -4,7 +4,14 @@ RSpec.describe RelsSession::UserSessions do
   let(:user) { double(uuid: SecureRandom.uuid) }
 
   let(:instance) { described_class.new(user: user) }
+  let(:instance_with_options) { described_class.new(user, expires_after: 45) }
   let(:session_id) { SecureRandom.hex }
+
+  describe "#initialize" do
+    it "sets the ttl" do
+      expect(instance_with_options.instance_variable_get(:@ttl)).to eq(45)
+    end
+  end
 
   describe "#add" do
     subject(:add) { instance.add(session_id.dup) }
