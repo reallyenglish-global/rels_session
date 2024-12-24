@@ -82,7 +82,7 @@ module RelsSession
 
         session[:meta] = meta
 
-        RelsSession::UserSessions.new(user.uuid).add(request.session.id.public_id)
+        RelsSession::UserSessions.new(user.uuid, options.slice(:expires_after)).add(request.session.id.public_id)
       end
 
       def record_logout_request(user, request)
