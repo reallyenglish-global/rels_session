@@ -13,12 +13,17 @@ module RelsSession
     def initialize(app, options = {})
       options = DEFAULT_OPTIONS.merge(options)
 
+      # private, public, both
+      @use_private_id = options.fetch(:sid_type, :both) == :private_id
+
       @redis = redis
 
-      @redis.then do |r|
-        r.sadd(
-          shared_context_key, application_name
-        )
+      unless use_private_id?
+        @redis.then do |r|
+          r.sadd(
+            shared_context_key, application_name
+          )
+        end
       end
 
       @ttl = options.fetch(:expires_after)
@@ -79,10 +84,13 @@ module RelsSession
     end
 
     def store_keys(session_id)
+      return [session_id.private_id] if use_private_id?
+
+      # SessionId#private_id and #public_id
       ids = [session_id.private_id, session_id.public_id]
 
       # Favour lookup on public_key until secure_store suported_by_all?
-      ids.reverse unless secure_store?
+      ids.reverse! unless secure_store?
 
       ids.map { |id| store_key(id) }
     end
@@ -90,6 +98,10 @@ module RelsSession
     def secure_store?
       using_secure_store = @redis.then { |r| r.smembers(shared_context_key) }
       (CLIENT_APPLICATIONS - using_secure_store).empty?
+    end
+
+    def use_private_id?
+      @use_private_id
     end
 
     def shared_context_key
