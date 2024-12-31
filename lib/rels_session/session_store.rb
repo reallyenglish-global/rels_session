@@ -3,7 +3,7 @@
 module RelsSession
   # Drop in session store for Reallyenglish rails apps.
   class SessionStore < ActionDispatch::Session::AbstractSecureStore
-    CLIENT_APPLICATIONS = %w[Rex Turtle WmApi Wfb N2r].freeze
+    CLIENT_APPLICATIONS = %w[Rex Turtle Wfb N2r].freeze
 
     DEFAULT_OPTIONS = {
       key: "rels_session",
@@ -14,7 +14,7 @@ module RelsSession
       options = DEFAULT_OPTIONS.merge(options)
 
       # private, public, both
-      @use_private_id = options.fetch(:sid_type, :both) == :private_id
+      @sid_type = options.fetch(:sid_type, :both).to_sym
 
       @redis = redis
 
@@ -84,13 +84,18 @@ module RelsSession
     end
 
     def store_keys(session_id)
-      return [session_id.private_id] if use_private_id?
-
-      # SessionId#private_id and #public_id
-      ids = [session_id.private_id, session_id.public_id]
-
-      # Favour lookup on public_key until secure_store suported_by_all?
-      ids.reverse! unless secure_store?
+      ids =
+        if use_private_id?
+          [session_id.private_id]
+        elsif use_public_id?
+          [session_id.public_id]
+        elsif secure_store?
+          # SessionId#private_id and #public_id
+          [session_id.private_id, session_id.public_id]
+        else
+          # Favour lookup on public_key until secure_store suported_by_all?
+          [session_id.public_id, session_id.private_id]
+        end
 
       ids.map { |id| store_key(id) }
     end
@@ -101,7 +106,15 @@ module RelsSession
     end
 
     def use_private_id?
-      @use_private_id
+      @sid_type == :private_id
+    end
+
+    def use_public_id?
+      @sid_type == :public_id
+    end
+
+    def use_both?
+      @sid_type == :both
     end
 
     def shared_context_key
