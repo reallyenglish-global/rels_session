@@ -35,9 +35,9 @@ class RedisPool
     # No need to create new object — ConnectionPool will reinitialize next checkout
   end
 
-  def method_missing(method, *args, &block)
+  def method_missing(method, *args, **kwargs, &block)
     with do |redis|
-      redis.public_send(method, *args, &block)
+      redis.public_send(method, *args, **kwargs, &block)
     end
   end
 
