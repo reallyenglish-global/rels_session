@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        redis-version: [5]
+        redis-version: [7]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1.138.0
+        uses: ruby/setup-ruby@master
         with:
-          ruby-version: 3.2.0
+          ruby-version: 3.4.3
           bundler-cache: true
 
       - name: Install Dependencies
