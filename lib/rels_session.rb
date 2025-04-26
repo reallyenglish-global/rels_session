@@ -6,6 +6,7 @@ require "redis"
 require "connection_pool"
 require "action_dispatch"
 
+require_relative "redis_pool"
 require_relative "rels_session/version"
 require_relative "rels_session/types"
 require_relative "rels_session/session_store"
@@ -46,9 +47,7 @@ module RelsSession
     def pool
       options = redis_options
       options.delete(:namespace)
-      ConnectionPool.new(pool_options) do
-        ::Redis.new(options)
-      end
+      RedisPool.new(pool_options, options)
     end
 
     def pool_options
@@ -58,7 +57,7 @@ module RelsSession
     end
 
     def redis_options
-      opts = DEFAULT_REDIS_OPTIONS.merge(Settings.session_store.redis_options)
+      opts = DEFAULT_REDIS_OPTIONS.merge(Settings.session_store.redis_options.to_h)
 
       uri = URI(Settings.session_store.redis_options.url)
 
