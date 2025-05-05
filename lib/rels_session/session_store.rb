@@ -67,9 +67,9 @@ module RelsSession
       sessions = []
       pattern = "#{@namespace}:#{"?" * 32}"
       @redis.then do |r|
+        cursor = "0"
         begin
-          cursor = "0"
-          cursor, keys = r.scan(cursor, match: pattern, count: 100)
+          cursor, keys = r.scan(cursor, match: pattern, count: 500)
           sessions += keys
         end while cursor != "0"
       end
