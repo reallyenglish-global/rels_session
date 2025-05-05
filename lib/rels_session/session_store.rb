@@ -63,6 +63,19 @@ module RelsSession
       generate_sid
     end
 
+    def list_sessions
+      sessions = []
+      pattern = "#{@namespace}:#{"?" * 32}"
+      @redis.then do |r|
+        begin
+          cursor = "0"
+          cursor, keys = r.scan(cursor, match: pattern, count: 100)
+          sessions += keys
+        end while cursor != "0"
+      end
+      sessions
+    end
+
     private
 
     def redis
