@@ -47,5 +47,11 @@ RSpec.describe RelsSession::SessionStore do
         expect(store.list_sessions).to eq([[RelsSession.namespace, active_session_id].join(":")])
       end
     end
+
+    describe "#sessions" do
+      it "returns sessions" do
+        expect(described_class.sessions).to eq([[RelsSession.namespace, active_session_id].join(":")])
+      end
+    end
   end
 end

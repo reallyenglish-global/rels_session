@@ -40,8 +40,16 @@ module RelsSession
       @redis ||= pool
     end
 
+    def store
+      SessionStore.instance
+    end
+
     def namespace
       Settings.session_store.redis_options.namespace || DEFAULT_REDIS_OPTIONS.fetch(:namespace)
+    end
+
+    def sessions
+      SessionStore.sessions
     end
 
     def pool
