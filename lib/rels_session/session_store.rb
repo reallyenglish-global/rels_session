@@ -10,6 +10,14 @@ module RelsSession
       expires_after: 2 * 7 * 24 * 60 * 60
     }.freeze
 
+    def self.sessions
+      instance.list_sessions
+    end
+
+    def self.instance
+      @instance ||= new(nil)
+    end
+
     def initialize(app, options = {})
       options = DEFAULT_OPTIONS.merge(options)
 

@@ -44,4 +44,16 @@ RSpec.describe RelsSession do
       end
     end
   end
+
+  describe ".store" do
+    it "return store instance" do
+      expect(described_class.store).to be_a(RelsSession::SessionStore)
+    end
+  end
+
+  describe ".sessions" do
+    it "returns sessions" do
+      expect(described_class.sessions).to be_a(Array)
+    end
+  end
 end
