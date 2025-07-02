@@ -71,13 +71,14 @@ module RelsSession
       generate_sid
     end
 
+    # Drop in session store for Reallyenglish rails apps.
     def list_sessions
       sessions = []
-      pattern = "#{@namespace}:#{"?" * 32}"
+      pattern = "#{@namespace}:2::*"
       @redis.then do |r|
         cursor = "0"
         begin
-          cursor, keys = r.scan(cursor, match: pattern, count: 500)
+          cursor, keys = r.scan(cursor, match: pattern, count: 5)
           sessions += keys
         end while cursor != "0"
       end
