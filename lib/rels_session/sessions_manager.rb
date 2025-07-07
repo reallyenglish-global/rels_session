@@ -73,7 +73,7 @@ module RelsSession
         session = request.session
 
         meta = RelsSession::SessionMeta.new(
-          ip: request.ip,
+          ip: request.forwarded_for&.first || request.ip,
           browser: device.name,
           os: device.os_name,
           app_version: request.headers["appversion"],

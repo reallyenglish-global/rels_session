@@ -68,6 +68,7 @@ RSpec.describe RelsSession::SessionsManager do
     let(:request) do
       double(
         user_agent: "Chrome",
+        forwarded_for: ["212.139.254.50"],
         ip: "212.139.254.49",
         headers: { "appversion" => "1.0.0" },
         session: double(id: active_session_id, :[]= => nil)
@@ -87,7 +88,7 @@ RSpec.describe RelsSession::SessionsManager do
       allow(Time).to receive(:now).and_return(now)
       expect(RelsSession::SessionMeta).to receive(:new).with(
         browser: "Chrome",
-        ip: "212.139.254.49",
+        ip: "212.139.254.50",
         app_version: "1.0.0",
         device_name: nil,
         device_type: nil,
