@@ -53,6 +53,9 @@ module RelsSession
       keys = store_keys(session_id)
 
       if session
+        # Update meta timestamps
+        session["meta"]["updated_at"] = Time.now if session["meta"]
+
         keys.each do |key|
           @redis.then { |r| r.set(key, session.to_json, ex: @ttl) }
         end
