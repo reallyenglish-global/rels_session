@@ -80,6 +80,31 @@ RSpec.describe RelsSession::SessionsManager do
       described_class.record_authenticated_request(user, request, expires_after: 45)
       expect(RelsSession::UserSessions).to have_received(:new).with(user.uuid, expires_after: 45)
     end
+
+    it "logs token authenticated user" do
+      allow(RelsSession::UserSessions).to receive(:new).and_return(double(add: nil))
+      now = Time.now
+      allow(Time).to receive(:now).and_return(now)
+      expect(RelsSession::SessionMeta).to receive(:new).with(
+        browser: "Chrome",
+        ip: "212.139.254.49",
+        app_version: "1.0.0",
+        device_name: nil,
+        device_type: nil,
+        public_session_id: active_session_id.public_id,
+        created_at: now,
+        updated_at: now,
+        os: nil,
+        session_key_type: :token
+      )
+      allow(Time).to receive(:zone).and_return(Time)
+      described_class.record_authenticated_request(
+        user, request,
+        expires_after: 45,
+        session_key_type: :token,
+        sign_in_at: now
+      )
+    end
   end
 
   def setup_sessions
