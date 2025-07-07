@@ -6,6 +6,7 @@ module RelsSession
     attribute :ip, Types::String
     attribute :browser, Types::String.optional
     attribute :os, Types::String.optional
+    attribute :app_version, Types::String.optional
     attribute :device_name, Types::String.optional
     attribute :device_type, Types::String.optional
     attribute :public_session_id, Types::Coercible::String
