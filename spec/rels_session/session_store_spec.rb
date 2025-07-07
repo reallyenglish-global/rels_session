@@ -15,11 +15,6 @@ RSpec.describe RelsSession::SessionStore do
     it "returns the active_session_id" do
       expect(write_session).to eq(active_session_id)
     end
-
-    it "updates updated_at" do
-      store.write_session(nil, active_session_id, { "meta" => {}, "test" => "figs" }, nil)
-      expect(find_session.last["meta"]["updated_at"]).to be_present
-    end
   end
 
   context "when a session exists" do

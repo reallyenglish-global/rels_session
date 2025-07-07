@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rels_session"
+require "debug"
 
 module RelsSession
   class SettingsStruct < Dry::Struct

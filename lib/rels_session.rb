@@ -52,6 +52,10 @@ module RelsSession
       SessionStore.sessions
     end
 
+    def user_sessions
+      UserSessions.list
+    end
+
     def pool
       options = redis_options
       options.delete(:namespace)

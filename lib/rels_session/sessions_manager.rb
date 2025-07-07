@@ -5,6 +5,10 @@ require "device_detector"
 module RelsSession
   # View and manage Reallyenglish user sessions.
   class SessionsManager
+    def self.for(user)
+      new(user)
+    end
+
     def initialize(user)
       @user = user
       @user_sessions = RelsSession::UserSessions.new(user.uuid)
@@ -75,8 +79,8 @@ module RelsSession
           app_version: request.headers["appversion"],
           device_name: device.device_name,
           device_type: device.device_type,
-          public_session_id: request.session.id.public_id,
-          session_key_type: :cookie,
+          public_session_id: session.id.public_id,
+          session_key_type: options.fetch(:session_key_type, :cookie),
           created_at: options.fetch(:sign_in_at, nil),
           updated_at: Time.zone.now
         )

@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "database_cleaner-redis"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "debug", "~> 1.11"
   spec.add_development_dependency "rubocop", "~> 1.27"
   spec.add_development_dependency "rubocop-rake", "~> 0.6"
   spec.add_development_dependency "rubocop-rspec", "~> 2.8"
