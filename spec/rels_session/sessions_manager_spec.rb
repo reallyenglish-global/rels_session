@@ -65,7 +65,15 @@ RSpec.describe RelsSession::SessionsManager do
   end
 
   describe ".record_authenticated_request" do
-    let(:request) { double(user_agent: "Chrome", ip: "212.139.254.49", session: double(id: active_session_id, :[]= => nil)) }
+    let(:request) do
+      double(
+        user_agent: "Chrome",
+        ip: "212.139.254.49",
+        headers: { "appversion" => "1.0.0" },
+        session: double(id: active_session_id, :[]= => nil)
+      )
+    end
+
     it "logs user out of all sessions" do
       allow(RelsSession::UserSessions).to receive(:new).and_return(double(add: nil))
       allow(Time).to receive(:zone).and_return(Time)

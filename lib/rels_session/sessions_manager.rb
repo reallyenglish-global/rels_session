@@ -72,6 +72,7 @@ module RelsSession
           ip: request.ip,
           browser: device.name,
           os: device.os_name,
+          app_version: request.headers["appversion"],
           device_name: device.device_name,
           device_type: device.device_type,
           public_session_id: request.session.id.public_id,
