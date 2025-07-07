@@ -70,7 +70,7 @@ RSpec.describe RelsSession::SessionsManager do
         user_agent: "Chrome",
         forwarded_for: ["212.139.254.50"],
         ip: "212.139.254.49",
-        headers: { "appversion" => "1.0.0" },
+        env: { "HTTP_APP_VERSION" => "1.0.0" },
         session: double(id: active_session_id, :[]= => nil)
       )
     end

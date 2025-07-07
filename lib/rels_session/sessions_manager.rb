@@ -76,7 +76,7 @@ module RelsSession
           ip: request.forwarded_for&.first || request.ip,
           browser: device.name,
           os: device.os_name,
-          app_version: request.headers["appversion"],
+          app_version: request.env["HTTP_APP_VERSION"],
           device_name: device.device_name,
           device_type: device.device_type,
           public_session_id: session.id.public_id,
