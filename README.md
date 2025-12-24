@@ -96,6 +96,7 @@ The specs flush the configured Redis database before and after each example, so 
 - When scanning Redis (`list_sessions`, `UserSessions.list`), the default `count` is 50 (override with `RELS_SESSION_SCAN_COUNT`) to cut round trips; tune it if you operate in much larger clusters.
 - `SessionsManager` reuses the memoized `RelsSession.store` and leverages `SessionStore#find_sessions` to fetch all of a user’s sessions in a single Redis round-trip.
 - `SessionStore#secure_store?` sets/reads a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) instead of scanning `active_applications`. Any application that uses public IDs will set the flag with a TTL, so the check becomes a constant-time `EXISTS`. Ensure all apps operate on the same namespace so the flag propagates across processes.
+- `SessionStore#peek_session` returns the raw JSON payload and avoids parsing when callers only need metadata summaries.
 
 ### Additional tuning ideas
 

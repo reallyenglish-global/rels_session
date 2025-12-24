@@ -55,6 +55,12 @@ RSpec.describe RelsSession::SessionStore do
       end
     end
 
+    describe "#peek_session" do
+      it "returns the raw stored json string" do
+        expect(store.peek_session(nil, active_session_id)).to eq({ "test" => "figs" }.to_json)
+      end
+    end
+
     describe "#find_sessions" do
       it "returns sessions for the provided ids" do
         second_session_id = Rack::Session::SessionId.new(SecureRandom.hex)

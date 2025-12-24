@@ -105,6 +105,10 @@ module RelsSession
       sessions
     end
 
+    def peek_session(_, session_id)
+      get_session(session_id)
+    end
+
     private
 
     def redis
