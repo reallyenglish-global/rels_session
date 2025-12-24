@@ -38,27 +38,38 @@ module RelsSession
     end
 
     def add(session_id)
-      @redis.then do |r|
+      results = @redis.then do |r|
         r.multi do |m|
           m.sadd?(key, session_id)
           m.expire(key, @ttl)
         end
       end
+
+      added = Array(results).first
+      RelsSession.stats.increment_total_sessions if added
+
+      results
     end
 
     def remove(session_id)
-      @redis.then { |r| r.srem(key, session_id) }
+      removed = @redis.then { |r| r.srem(key, session_id) }
+      RelsSession.stats.decrement_total_sessions(removed)
+      removed
     end
 
     def remove_all(session_ids)
       ids = Array(session_ids).compact
       return if ids.empty?
 
-      @redis.then do |r|
+      removed = @redis.then do |r|
         r.pipelined do |pipeline|
-          ids.each { |session_id| pipeline.srem(key, session_id) }
+          ids.map { |session_id| pipeline.srem(key, session_id) }
         end
       end
+
+      total_removed = Array(removed).compact.map(&:to_i).sum
+      RelsSession.stats.decrement_total_sessions(total_removed)
+      total_removed
     end
 
     def list

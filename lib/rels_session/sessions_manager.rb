@@ -22,6 +22,7 @@ module RelsSession
     def logout_all_sessions
       ids = user_session_ids
       @session_store.delete_sessions(nil, ids)
+      user_sessions.remove_all(ids.map(&:public_id))
       user_sessions.clear
     end
 

@@ -105,6 +105,17 @@ gem "rels_session", github: "reallyenglish-global/rels-session", branch: "feat/s
 
 Run `bundle install`, then execute your app’s test suite and any manual smoke tests. Once satisfied, revert to the main branch reference (or a tagged release) and publish the gem.
 
+### Runtime stats
+
+To avoid scanning Redis for basic counts, the gem maintains lightweight counters under `<namespace>:stats:*`. You can access them via:
+
+```ruby
+RelsSession.stats.totals
+# => { total_sessions: 42, last_updated_at: 2024-06-01 12:34:56 +0000 }
+```
+
+Counters update automatically when sessions are added or removed through `UserSessions`.
+
 ## Performance considerations
 
 - `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write and persists a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) so each process can quickly check readiness.

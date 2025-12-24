@@ -18,6 +18,7 @@ require_relative "rels_session/session_meta"
 require_relative "rels_session/sessions_manager"
 require_relative "rels_session/user_sessions"
 require_relative "rels_session/serializer"
+require_relative "rels_session/stats"
 
 # Connect and manage user sessions across RE rails apps.
 module RelsSession
@@ -93,6 +94,10 @@ module RelsSession
         else
           Serializers.for(backend)
         end
+    end
+
+    def stats
+      @stats ||= Stats.new
     end
 
     def pool_options
