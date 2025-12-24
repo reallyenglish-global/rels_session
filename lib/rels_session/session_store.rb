@@ -41,7 +41,7 @@ module RelsSession
         session = "{}"
       end
 
-      [session_id, JSON.parse(session)]
+      [session_id, JSON.parse(session, symbolize_names: true)]
     end
 
     def find_sessions(_, session_ids)
@@ -66,7 +66,7 @@ module RelsSession
 
       session_ids.map do |session_id|
         json = session_key_map.fetch(session_id).lazy.map { |key| key_value_map[key] }.find(&:itself)
-        json ? JSON.parse(json) : {}
+        json ? JSON.parse(json, symbolize_names: true) : {}
       end
     end
 

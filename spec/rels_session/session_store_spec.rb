@@ -28,7 +28,7 @@ RSpec.describe RelsSession::SessionStore do
 
         session = find_session.last
         expect(session).to eq(
-          "test" => "figs"
+          test: "figs"
         )
       end
     end
@@ -81,8 +81,8 @@ RSpec.describe RelsSession::SessionStore do
 
         expect(result).to eq(
           [
-            { "test" => "figs" },
-            { "another" => "value" }
+            { test: "figs" },
+            { another: "value" }
           ]
         )
       end
@@ -135,8 +135,8 @@ RSpec.describe RelsSession::SessionStore do
 
       expect(result).to eq(
         [
-          { "test" => "figs" },
-          { "another" => "value" }
+          { test: "figs" },
+          { another: "value" }
         ]
       )
     end
