@@ -28,14 +28,6 @@ module RelsSession
 
       @redis = redis
 
-      unless use_private_id?
-        @redis.then do |r|
-          r.sadd(
-            shared_context_key, application_name
-          )
-        end
-      end
-
       @ttl = options.fetch(:expires_after)
       @namespace = RelsSession.namespace
 
@@ -158,10 +150,22 @@ module RelsSession
         return @secure_store_cached_value
       end
 
-      using_secure_store = @redis.then { |r| r.smembers(shared_context_key) }
-      @secure_store_cached_value = (CLIENT_APPLICATIONS - using_secure_store).empty?
+      flag_key = secure_store_flag_key
+
+      unless use_private_id?
+        @redis.then do |r|
+          r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
+        end
+      end
+
+      cached_value = @redis.then { |r| r.exists?(flag_key) }
+      @secure_store_cached_value = cached_value
       @secure_store_cached_at = Time.now
-      @secure_store_cached_value
+      cached_value
+    end
+
+    def secure_store_flag_key
+      [@namespace, Rack::Session::SessionId::ID_VERSION, "secure_store_enabled"].join(":")
     end
 
     def use_private_id?

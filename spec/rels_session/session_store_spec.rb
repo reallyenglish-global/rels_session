@@ -77,7 +77,8 @@ RSpec.describe RelsSession::SessionStore do
       store = described_class.new(nil, {})
       redis = instance_double("Redis")
       allow(redis).to receive(:then).and_yield(redis)
-      allow(redis).to receive(:smembers).and_return(described_class::CLIENT_APPLICATIONS)
+      allow(redis).to receive(:set)
+      allow(redis).to receive(:exists?).and_return(true)
 
       store.instance_variable_set(:@redis, redis)
       session_id = instance_double(
@@ -89,7 +90,7 @@ RSpec.describe RelsSession::SessionStore do
       store.send(:store_keys, session_id)
       store.send(:store_keys, session_id)
 
-      expect(redis).to have_received(:smembers).once
+      expect(redis).to have_received(:exists?).once
     end
   end
 
@@ -98,7 +99,8 @@ RSpec.describe RelsSession::SessionStore do
       store = described_class.new(nil, {})
       redis = instance_double("Redis")
       allow(redis).to receive(:then).and_yield(redis)
-      allow(redis).to receive(:smembers).and_return(described_class::CLIENT_APPLICATIONS)
+      allow(redis).to receive(:set)
+      allow(redis).to receive(:exists?).and_return(true)
       store.instance_variable_set(:@redis, redis)
 
       session_id_a = Rack::Session::SessionId.new(SecureRandom.hex)
