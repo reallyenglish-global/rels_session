@@ -52,6 +52,11 @@ Config.setup do |config|
 end
 ```
 
+### Optional environment variables
+
+- `RELS_SESSION_SCAN_COUNT` — overrides the number of keys fetched per SCAN iteration (default `50`).
+- `RELS_SESSION_SERIALIZER` — choose `json` (default) or `oj` to control how session payloads are encoded and decoded.
+
 ## Managing sessions
 
 Recording an authenticated request from a controller:

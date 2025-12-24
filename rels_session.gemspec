@@ -35,6 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "bigdecimal", ">= 3.0"
   spec.add_runtime_dependency "mutex_m"
   spec.add_runtime_dependency "base64"
+  spec.add_runtime_dependency "oj", ">= 3.13"
   spec.add_runtime_dependency "redis", ">= 5", "< 6"
 
   spec.add_development_dependency "database_cleaner-redis"

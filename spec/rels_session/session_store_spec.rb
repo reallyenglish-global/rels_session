@@ -17,6 +17,21 @@ RSpec.describe RelsSession::SessionStore do
     end
   end
 
+  describe "serializer configuration" do
+    around do |example|
+      original = RelsSession.serializer
+      example.run
+    ensure
+      RelsSession.serializer = :json
+    end
+
+    it "round-trips sessions using the Oj serializer" do
+      RelsSession.serializer = :oj
+      write_session
+      expect(find_session.last).to eq(test: "figs")
+    end
+  end
+
   context "when a session exists" do
     before do
       write_session

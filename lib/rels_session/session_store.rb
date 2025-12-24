@@ -38,10 +38,10 @@ module RelsSession
     def find_session(_, session_id)
       unless session_id && (session = get_session(session_id))
         session_id = generate_sid
-        session = "{}"
+        session = RelsSession.serializer.dump({})
       end
 
-      [session_id, JSON.parse(session, symbolize_names: true)]
+      [session_id, RelsSession.serializer.load(session)]
     end
 
     def find_sessions(_, session_ids)
@@ -66,7 +66,7 @@ module RelsSession
 
       session_ids.map do |session_id|
         json = session_key_map.fetch(session_id).lazy.map { |key| key_value_map[key] }.find(&:itself)
-        json ? JSON.parse(json, symbolize_names: true) : {}
+        json ? RelsSession.serializer.load(json) : {}
       end
     end
 
@@ -74,7 +74,7 @@ module RelsSession
       keys = store_keys(session_id)
 
       if session
-        payload = session.to_json
+        payload = RelsSession.serializer.dump(session)
         @redis.then do |r|
           r.pipelined do |pipeline|
             keys.each do |key|
