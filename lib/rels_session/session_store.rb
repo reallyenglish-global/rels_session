@@ -107,14 +107,28 @@ module RelsSession
     end
 
     # Drop in session store for Reallyenglish rails apps.
-    def list_sessions
-      sessions = []
+    def list_sessions(stream: false)
       pattern = "#{@namespace}:2::*"
+
+      if stream
+        return enum_for(:list_sessions, stream: true) unless block_given?
+
+        @redis.then do |r|
+          cursor = "0"
+          begin
+            cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
+            keys.each { |key| yield key }
+          end while cursor != "0"
+        end
+        return
+      end
+
+      sessions = []
       @redis.then do |r|
         cursor = "0"
         begin
           cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
-          sessions += keys
+          sessions.concat(keys)
         end while cursor != "0"
       end
       sessions

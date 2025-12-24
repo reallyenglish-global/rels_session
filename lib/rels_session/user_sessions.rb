@@ -3,14 +3,28 @@
 module RelsSession
   # Add and remove user sessions, outside of rails app. Used by session_store
   class UserSessions
-    def self.list
-      sessions = []
+    def self.list(stream: false)
       pattern = "#{RelsSession.namespace}:user_sessions:*"
+
+      if stream
+        return enum_for(:list, stream: true) unless block_given?
+
+        RelsSession.redis.then do |r|
+          cursor = "0"
+          begin
+            cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
+            keys.each { |key| yield key }
+          end while cursor != "0"
+        end
+        return
+      end
+
+      sessions = []
       RelsSession.redis.then do |r|
         cursor = "0"
         begin
           cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
-          sessions += keys
+          sessions.concat(keys)
         end while cursor != "0"
       end
       sessions

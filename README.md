@@ -101,10 +101,10 @@ The specs flush the configured Redis database before and after each example, so 
 - `secure_store?` only rewrites the enablement flag once per TTL to avoid hot loops when public IDs are in heavy use.
 - `SessionsManager#logout_all_sessions` removes session keys in bulk via `SessionStore#delete_sessions`, reducing the number of Redis calls.
 - `SessionStore#find_session(s)` parses JSON using `symbolize_names: true`, so callers avoid repeated key conversions.
+- `SessionStore.list_sessions` and `UserSessions.list` accept `stream: true` to yield keys lazily for large scans.
 
 ### Additional tuning ideas
 
-- Expose streaming enumerators for `list_sessions`/`UserSessions.list` when callers only need aggregate data.
 - Consider providing an opt-in pipeline for logout operations that need to touch dozens of keys.
 - Batch logout flows (`SessionsManager#logout_all_sessions`) by pipelining the `DEL`/`SREM` operations.
 - Parse session JSON with `symbolize_names: true` when possible so downstream callers do less conversion.
