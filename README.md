@@ -103,13 +103,16 @@ The specs flush the configured Redis database before and after each example, so 
 - `SessionStore#find_session(s)` parses JSON using `symbolize_names: true`, so callers avoid repeated key conversions.
 - `SessionStore.list_sessions` and `UserSessions.list` accept `stream: true` to yield keys lazily for large scans.
 - `SessionsManager.logout_sessions(user, ids)` combines `delete_sessions` with pipelined `SREM`s via `UserSessions#remove_all` for targeted bulk logouts.
+- `RelsSession.store` is a shared singleton, so processes reuse the same connection pool and secure-store cache instead of instantiating new stores.
+- All Redis hot paths (writes, deletes, session fetches) now use pipelining or bulk commands to minimize round trips.
 
 ### Additional tuning ideas
 
-- Consider providing an opt-in pipeline for logout operations that need to touch dozens of keys.
-- Batch logout flows (`SessionsManager#logout_all_sessions`) by pipelining the `DEL`/`SREM` operations.
-- Parse session JSON with `symbolize_names: true` when possible so downstream callers do less conversion.
-- Expose streaming enumerators for `list_sessions`/`UserSessions.list` when callers only need aggregate data.
+- Consider storing session payloads with a faster encoder (e.g., MessagePack) or optional compression for very large sessions.
+- Explore client-side caching (per-thread or per-request) for `find_session` to reduce duplicate Redis reads in hot code paths.
+- Turn on Redis client-side caching or replica reads when your deployment supports it to reduce cross-process latency.
+- Emit aggregated metrics (counts per namespace/app) so dashboards don’t need to run `SCAN` in production.
+- Use `RELS_SESSION_SCAN_COUNT` to tune SCAN behavior per environment; lowering it reduces per-iteration cost, raising it speeds up large scans.
 
 ## Working with AI assistants
 
