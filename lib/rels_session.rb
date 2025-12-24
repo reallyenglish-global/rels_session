@@ -39,6 +39,8 @@ module RelsSession
       namespace: "rels_session"
     }.freeze
 
+    DEFAULT_SCAN_COUNT = 50
+
     def redis
       @redis ||= pool
     end
@@ -63,6 +65,13 @@ module RelsSession
       options = redis_options
       options.delete(:namespace)
       RedisPool.new(pool_options, options)
+    end
+
+    def scan_count
+      count = ENV.fetch("RELS_SESSION_SCAN_COUNT", DEFAULT_SCAN_COUNT).to_i
+      return DEFAULT_SCAN_COUNT if count <= 0
+
+      count
     end
 
     def pool_options

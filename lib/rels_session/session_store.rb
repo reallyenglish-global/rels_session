@@ -98,7 +98,7 @@ module RelsSession
       @redis.then do |r|
         cursor = "0"
         begin
-          cursor, keys = r.scan(cursor, match: pattern, count: 5)
+          cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
           sessions += keys
         end while cursor != "0"
       end

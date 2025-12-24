@@ -93,8 +93,9 @@ The specs flush the configured Redis database before and after each example, so 
 
 - `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write. Adjust `SECURE_STORE_CACHE_TTL` if you need faster propagation across apps.
 - `SessionsManager.active_sessions` now tolerates string-keyed JSON payloads and fills in default values before instantiating `SessionMeta`, preventing unnecessary exceptions when metadata is sparse.
-- When scanning Redis (`list_sessions`, `UserSessions.list`), feel free to tune the `count` option if you operate in clusters with very high key counts.
+- When scanning Redis (`list_sessions`, `UserSessions.list`), the default `count` is 50 (override with `RELS_SESSION_SCAN_COUNT`) to cut round trips; tune it if you operate in much larger clusters.
 - `SessionsManager` reuses the memoized `RelsSession.store` and leverages `SessionStore#find_sessions` to fetch all of a user’s sessions in a single Redis round-trip.
+- `SessionStore#secure_store?` sets/reads a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) instead of scanning `active_applications`. Any application that uses public IDs will set the flag with a TTL, so the check becomes a constant-time `EXISTS`. Ensure all apps operate on the same namespace so the flag propagates across processes.
 
 ### Additional tuning ideas
 
