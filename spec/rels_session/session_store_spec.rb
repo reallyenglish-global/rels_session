@@ -58,6 +58,12 @@ RSpec.describe RelsSession::SessionStore do
       it "returns sessions" do
         expect(store.list_sessions).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
       end
+
+      it "yields sessions when streaming" do
+        keys = []
+        store.list_sessions(stream: true) { |key| keys << key }
+        expect(keys).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
+      end
     end
 
     describe "#sessions" do

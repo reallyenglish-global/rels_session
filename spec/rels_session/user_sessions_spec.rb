@@ -68,4 +68,14 @@ RSpec.describe RelsSession::UserSessions do
       expect(instance.list).to be_empty
     end
   end
+
+  describe ".list" do
+    it "yields sessions when streaming" do
+      key = [RelsSession.namespace, "user_sessions", user.uuid].join(":")
+      sessions = []
+      allow(RelsSession.redis).to receive(:then).and_yield(instance_double("Redis", scan: ["0", [key]], flushall: nil))
+      described_class.list(stream: true) { |value| sessions << value }
+      expect(sessions).to eq([key])
+    end
+  end
 end
