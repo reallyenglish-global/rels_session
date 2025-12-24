@@ -94,6 +94,17 @@ RelsSession::SessionsManager.logout_session(current_user, params[:session_id])
 
 The specs flush the configured Redis database before and after each example, so keep a dedicated DB for development/testing.
 
+### Testing feature branches in an app
+
+Before cutting a release, point your downstream Rails app at the feature branch to exercise the changes end-to-end:
+
+```ruby
+# Gemfile
+gem "rels_session", github: "reallyenglish-global/rels-session", branch: "feat/session-stats"
+```
+
+Run `bundle install`, then execute your app’s test suite and any manual smoke tests. Once satisfied, revert to the main branch reference (or a tagged release) and publish the gem.
+
 ## Performance considerations
 
 - `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write and persists a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) so each process can quickly check readiness.
@@ -110,6 +121,7 @@ The specs flush the configured Redis database before and after each example, so 
 - `SessionsManager.logout_sessions(user, ids)` combines `delete_sessions` with pipelined `SREM`s via `UserSessions#remove_all` for targeted bulk logouts.
 - `RelsSession.store` is a shared singleton, so processes reuse the same connection pool and secure-store cache instead of instantiating new stores.
 - All Redis hot paths (writes, deletes, session fetches) now use pipelining or bulk commands to minimize round trips.
+- `RedisPool#with` instruments retries with jitter and short-lived circuit breaking to protect the app when Redis is unavailable.
 
 ### Additional tuning ideas
 
