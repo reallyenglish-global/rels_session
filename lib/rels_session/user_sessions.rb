@@ -50,6 +50,17 @@ module RelsSession
       @redis.then { |r| r.srem(key, session_id) }
     end
 
+    def remove_all(session_ids)
+      ids = Array(session_ids).compact
+      return if ids.empty?
+
+      @redis.then do |r|
+        r.pipelined do |pipeline|
+          ids.each { |session_id| pipeline.srem(key, session_id) }
+        end
+      end
+    end
+
     def list
       @redis.then { |r| r.smembers(key) }
     end

@@ -34,6 +34,11 @@ module RelsSession
       @session_store.find_sessions(nil, session_ids)
     end
 
+    def logout_sessions(session_ids)
+      @session_store.delete_sessions(nil, session_ids)
+      user_sessions.remove_all(session_ids.map(&:public_id))
+    end
+
     private
 
     def user_session_ids
@@ -53,6 +58,11 @@ module RelsSession
         session_id = Rack::Session::SessionId.new(public_session_id)
 
         new(user).logout_session(session_id)
+      end
+
+      def logout_sessions(user, public_session_ids)
+        session_ids = Array(public_session_ids).map { |public_id| Rack::Session::SessionId.new(public_id) }
+        new(user).logout_sessions(session_ids)
       end
 
       def active_sessions(user)

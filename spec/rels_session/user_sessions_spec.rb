@@ -55,4 +55,17 @@ RSpec.describe RelsSession::UserSessions do
       end
     end
   end
+
+  describe "#remove_all" do
+    let(:session_ids) { [SecureRandom.hex, SecureRandom.hex] }
+
+    before do
+      session_ids.each { |id| instance.add(id.dup) }
+    end
+
+    it "removes multiple sessions with a single pipelined call" do
+      instance.remove_all(session_ids)
+      expect(instance.list).to be_empty
+    end
+  end
 end

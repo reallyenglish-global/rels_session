@@ -102,6 +102,7 @@ The specs flush the configured Redis database before and after each example, so 
 - `SessionsManager#logout_all_sessions` removes session keys in bulk via `SessionStore#delete_sessions`, reducing the number of Redis calls.
 - `SessionStore#find_session(s)` parses JSON using `symbolize_names: true`, so callers avoid repeated key conversions.
 - `SessionStore.list_sessions` and `UserSessions.list` accept `stream: true` to yield keys lazily for large scans.
+- `SessionsManager.logout_sessions(user, ids)` combines `delete_sessions` with pipelined `SREM`s via `UserSessions#remove_all` for targeted bulk logouts.
 
 ### Additional tuning ideas
 

@@ -16,6 +16,7 @@ RSpec.describe RelsSession::SessionsManager do
   let(:user) { double(uuid: SecureRandom.uuid) }
   let(:active_session_id) { Rack::Session::SessionId.new(SecureRandom.hex) }
   let(:active_session_meta) { meta }
+  let(:devise_session) { { "meta" => active_session_meta.to_h } }
 
   let(:session_store) do
     RelsSession::SessionStore.new(
@@ -123,9 +124,23 @@ RSpec.describe RelsSession::SessionsManager do
     end
   end
 
-  def setup_sessions
-    devise_session = { "meta" => active_session_meta.to_h }
+  describe ".logout_sessions" do
+    let(:second_session_id) { Rack::Session::SessionId.new(SecureRandom.hex) }
 
+    before do
+      session_store.write_session(nil, second_session_id, devise_session, nil)
+      RelsSession::UserSessions.new(user.uuid)
+                               .add(second_session_id.public_id)
+    end
+
+    it "logs out only the provided sessions" do
+      described_class.logout_sessions(user, [second_session_id.public_id])
+      expect(session_store.find_session(nil, second_session_id).last).to eq({})
+      expect(instance.active_sessions.size).to eq(1)
+    end
+  end
+
+  def setup_sessions
     session_store.write_session(nil, active_session_id, devise_session, nil)
 
     RelsSession::UserSessions.new(user.uuid)
