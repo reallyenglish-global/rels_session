@@ -20,10 +20,8 @@ module RelsSession
     end
 
     def logout_all_sessions
-      user_session_ids.each do |session_id|
-        @session_store.delete_session(nil, session_id, nil)
-      end
-
+      ids = user_session_ids
+      @session_store.delete_sessions(nil, ids)
       user_sessions.clear
     end
 

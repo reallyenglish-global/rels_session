@@ -97,6 +97,15 @@ module RelsSession
       generate_sid
     end
 
+    def delete_sessions(_, session_ids)
+      keys = session_ids.flat_map { |session_id| store_keys(session_id) }.uniq
+      return if keys.empty?
+
+      @redis.then do |r|
+        r.del(*keys)
+      end
+    end
+
     # Drop in session store for Reallyenglish rails apps.
     def list_sessions
       sessions = []

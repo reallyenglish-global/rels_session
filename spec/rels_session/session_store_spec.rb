@@ -43,6 +43,17 @@ RSpec.describe RelsSession::SessionStore do
       end
     end
 
+    describe "#delete_sessions" do
+      it "removes multiple sessions in a single call" do
+        second_session_id = Rack::Session::SessionId.new(SecureRandom.hex)
+        store.write_session(nil, second_session_id, { "another" => "value" }, nil)
+
+        store.delete_sessions(nil, [active_session_id, second_session_id])
+
+        expect(store.list_sessions).to be_empty
+      end
+    end
+
     describe "#list_sessions" do
       it "returns sessions" do
         expect(store.list_sessions).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])

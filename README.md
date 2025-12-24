@@ -99,10 +99,10 @@ The specs flush the configured Redis database before and after each example, so 
 - `RedisPool#with` uses jittered exponential backoff when reconnecting to Redis to reduce coordinated sleeps across threads.
 - `SessionStore#write_session` pipelines mirrored key updates and `#find_sessions` deduplicates keys before `MGET`, trimming Redis chatter.
 - `secure_store?` only rewrites the enablement flag once per TTL to avoid hot loops when public IDs are in heavy use.
+- `SessionsManager#logout_all_sessions` removes session keys in bulk via `SessionStore#delete_sessions`, reducing the number of Redis calls.
 
 ### Additional tuning ideas
 
-- Batch logout flows (`SessionsManager#logout_all_sessions`) by pipelining the `DEL`/`SREM` operations.
 - Parse session JSON with `symbolize_names: true` when possible so downstream callers do less conversion.
 - Expose streaming enumerators for `list_sessions`/`UserSessions.list` when callers only need aggregate data.
 - Consider providing an opt-in pipeline for logout operations that need to touch dozens of keys.
