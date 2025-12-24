@@ -30,6 +30,12 @@ RSpec.describe RelsSession::SessionsManager do
     setup_sessions
   end
 
+  describe "#initialize" do
+    it "reuses the singleton session store" do
+      expect(instance.instance_variable_get(:@session_store)).to be(RelsSession.store)
+    end
+  end
+
   describe "#active_sessions" do
     subject(:active_sessions) { instance.active_sessions }
 

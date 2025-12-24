@@ -12,7 +12,7 @@ module RelsSession
     def initialize(user)
       @user = user
       @user_sessions = RelsSession::UserSessions.new(user.uuid)
-      @session_store = RelsSession::SessionStore.new(nil, {})
+      @session_store = RelsSession.store
     end
 
     def logout_session(session_id)

@@ -89,6 +89,21 @@ RelsSession::SessionsManager.logout_session(current_user, params[:session_id])
 
 The specs flush the configured Redis database before and after each example, so keep a dedicated DB for development/testing.
 
+## Performance considerations
+
+- `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write. Adjust `SECURE_STORE_CACHE_TTL` if you need faster propagation across apps.
+- `SessionsManager.active_sessions` now tolerates string-keyed JSON payloads and fills in default values before instantiating `SessionMeta`, preventing unnecessary exceptions when metadata is sparse.
+- When scanning Redis (`list_sessions`, `UserSessions.list`), feel free to tune the `count` option if you operate in clusters with very high key counts.
+
+### Additional tuning ideas
+
+- Reuse a single `SessionStore` instance (e.g., `RelsSession.store`) inside `SessionsManager` so multiple managers share the same warmed cache, connection pool, and secure-store cache.
+- Batch-fetch sessions when enumerating a user’s session list by adding a `SessionStore#find_sessions(session_ids)` helper that wraps a single `MGET`/pipeline call.
+- Push the `shared_context_key` membership flag into Redis (e.g., `namespace:secure_store_enabled`) so `secure_store?` can check `EXISTS` instead of scanning the entire set.
+- Increase the `SCAN` `count` parameter (from the current `5`) to reduce round trips when listing thousands of keys.
+- Provide a lighter-weight `peek_session` that returns the raw JSON string to avoid extra parsing when callers only need metadata for counts/summaries.
+- Consider adding jittered exponential backoff to `RedisPool#with` to prevent coordinated sleeps across threads whenever Redis is unavailable.
+
 ## Working with AI assistants
 
 See `AGENTS.md` for instructions that describe how automated agents should gather context, run tests, and validate changes in this repository.
