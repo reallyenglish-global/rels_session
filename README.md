@@ -91,19 +91,24 @@ The specs flush the configured Redis database before and after each example, so 
 
 ## Performance considerations
 
-- `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write. Adjust `SECURE_STORE_CACHE_TTL` if you need faster propagation across apps.
+- `SessionStore#secure_store?` caches membership checks for 60 seconds to avoid an extra `SMEMBERS` round-trip on every session read/write and persists a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) so each process can quickly check readiness.
 - `SessionsManager.active_sessions` now tolerates string-keyed JSON payloads and fills in default values before instantiating `SessionMeta`, preventing unnecessary exceptions when metadata is sparse.
 - When scanning Redis (`list_sessions`, `UserSessions.list`), the default `count` is 50 (override with `RELS_SESSION_SCAN_COUNT`) to cut round trips; tune it if you operate in much larger clusters.
 - `SessionsManager` reuses the memoized `RelsSession.store` and leverages `SessionStore#find_sessions` to fetch all of a user’s sessions in a single Redis round-trip.
-- `SessionStore#secure_store?` sets/reads a Redis flag (`<namespace>:<id_version>:secure_store_enabled`) instead of scanning `active_applications`. Any application that uses public IDs will set the flag with a TTL, so the check becomes a constant-time `EXISTS`. Ensure all apps operate on the same namespace so the flag propagates across processes.
 - `SessionStore#peek_session` returns the raw JSON payload and avoids parsing when callers only need metadata summaries.
+- `RedisPool#with` uses jittered exponential backoff when reconnecting to Redis to reduce coordinated sleeps across threads.
+- `SessionStore#write_session` pipelines mirrored key updates and `#find_sessions` deduplicates keys before `MGET`, trimming Redis chatter.
+- `secure_store?` only rewrites the enablement flag once per TTL to avoid hot loops when public IDs are in heavy use.
 
 ### Additional tuning ideas
 
-- Push the `shared_context_key` membership flag into Redis (e.g., `namespace:secure_store_enabled`) so `secure_store?` can check `EXISTS` instead of scanning the entire set.
-- Increase the `SCAN` `count` parameter (from the current `5`) to reduce round trips when listing thousands of keys.
-- Provide a lighter-weight `peek_session` that returns the raw JSON string to avoid extra parsing when callers only need metadata for counts/summaries.
-- `RedisPool#with` uses jittered exponential backoff when reconnecting to Redis to reduce coordinated sleeps across threads.
+- Batch logout flows (`SessionsManager#logout_all_sessions`) by pipelining the `DEL`/`SREM` operations.
+- Parse session JSON with `symbolize_names: true` when possible so downstream callers do less conversion.
+- Expose streaming enumerators for `list_sessions`/`UserSessions.list` when callers only need aggregate data.
+- Consider providing an opt-in pipeline for logout operations that need to touch dozens of keys.
+- Batch logout flows (`SessionsManager#logout_all_sessions`) by pipelining the `DEL`/`SREM` operations.
+- Parse session JSON with `symbolize_names: true` when possible so downstream callers do less conversion.
+- Expose streaming enumerators for `list_sessions`/`UserSessions.list` when callers only need aggregate data.
 
 ## Working with AI assistants
 

@@ -96,6 +96,7 @@ RSpec.describe RelsSession::SessionStore do
       store.send(:store_keys, session_id)
       store.send(:store_keys, session_id)
 
+      expect(redis).to have_received(:set).once
       expect(redis).to have_received(:exists?).once
     end
   end
@@ -112,11 +113,11 @@ RSpec.describe RelsSession::SessionStore do
       session_id_a = Rack::Session::SessionId.new(SecureRandom.hex)
       session_id_b = Rack::Session::SessionId.new(SecureRandom.hex)
 
-      allow(store).to receive(:store_keys).with(session_id_a).and_return(%w[key:a:private key:a:public])
-      allow(store).to receive(:store_keys).with(session_id_b).and_return(%w[key:b:public key:b:private])
+      allow(store).to receive(:store_keys).with(session_id_a).and_return(%w[key:a key:a])
+      allow(store).to receive(:store_keys).with(session_id_b).and_return(%w[key:b key:b])
 
-      expect(redis).to receive(:mget).once.and_return(
-        ['{"test":"figs"}', nil, nil, '{"another":"value"}']
+      expect(redis).to receive(:mget).with("key:a", "key:b").once.and_return(
+        ['{"test":"figs"}', '{"another":"value"}']
       )
 
       result = store.find_sessions(nil, [session_id_a, session_id_b])

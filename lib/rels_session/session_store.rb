@@ -30,6 +30,7 @@ module RelsSession
 
       @ttl = options.fetch(:expires_after)
       @namespace = RelsSession.namespace
+      @secure_store_flag_written_at = nil
 
       super
     end
@@ -50,7 +51,7 @@ module RelsSession
       session_ids.each do |session_id|
         session_key_map[session_id] = store_keys(session_id)
       end
-      keys = session_key_map.values.flatten
+      keys = session_key_map.values.flatten.uniq
 
       key_value_map = {}
       @redis.then do |r|
@@ -73,8 +74,13 @@ module RelsSession
       keys = store_keys(session_id)
 
       if session
-        keys.each do |key|
-          @redis.then { |r| r.set(key, session.to_json, ex: @ttl) }
+        payload = session.to_json
+        @redis.then do |r|
+          r.pipelined do |pipeline|
+            keys.each do |key|
+              pipeline.set(key, payload, ex: @ttl)
+            end
+          end
         end
       else
         @redis.then { |r| r.del(*keys) }
@@ -157,8 +163,11 @@ module RelsSession
       flag_key = secure_store_flag_key
 
       unless use_private_id?
-        @redis.then do |r|
-          r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
+        if secure_flag_write_due?
+          @redis.then do |r|
+            r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
+          end
+          @secure_store_flag_written_at = Time.now
         end
       end
 
@@ -170,6 +179,12 @@ module RelsSession
 
     def secure_store_flag_key
       [@namespace, Rack::Session::SessionId::ID_VERSION, "secure_store_enabled"].join(":")
+    end
+
+    def secure_flag_write_due?
+      return true unless @secure_store_flag_written_at
+
+      (Time.now - @secure_store_flag_written_at) >= SECURE_STORE_CACHE_TTL
     end
 
     def use_private_id?
