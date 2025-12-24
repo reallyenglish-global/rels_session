@@ -3,8 +3,8 @@
 RSpec.describe RelsSession::UserSessions do
   let(:user) { double(uuid: SecureRandom.uuid) }
 
-  let(:instance) { described_class.new(user: user) }
-  let(:instance_with_options) { described_class.new(user, expires_after: 45) }
+  let(:instance) { described_class.new(user.uuid) }
+  let(:instance_with_options) { described_class.new(user.uuid, expires_after: 45) }
   let(:session_id) { SecureRandom.hex }
 
   describe "#initialize" do

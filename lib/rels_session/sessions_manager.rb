@@ -61,8 +61,30 @@ module RelsSession
       end
 
       def active_sessions(user)
-        new(user).active_sessions.map do |session|
-          RelsSession::SessionMeta.new(session[:meta].symbolize_keys)
+        new(user).active_sessions.filter_map do |session|
+          meta = session["meta"] || session[:meta]
+          next unless meta
+
+          attributes = if meta.respond_to?(:symbolize_keys)
+                         meta.symbolize_keys
+                       else
+                         meta.transform_keys(&:to_sym)
+                       end
+
+          with_defaults = {
+            ip: nil,
+            browser: nil,
+            os: nil,
+            app_version: nil,
+            device_name: nil,
+            device_type: nil,
+            public_session_id: nil,
+            session_key_type: :cookie,
+            created_at: nil,
+            updated_at: nil
+          }.merge(attributes)
+
+          RelsSession::SessionMeta.new(with_defaults)
         end
       end
 

@@ -55,4 +55,25 @@ RSpec.describe RelsSession::SessionStore do
       end
     end
   end
+
+  describe "#secure_store?" do
+    it "caches redis membership checks for a short period" do
+      store = described_class.new(nil, {})
+      redis = instance_double("Redis")
+      allow(redis).to receive(:then).and_yield(redis)
+      allow(redis).to receive(:smembers).and_return(described_class::CLIENT_APPLICATIONS)
+
+      store.instance_variable_set(:@redis, redis)
+      session_id = instance_double(
+        Rack::Session::SessionId,
+        private_id: SecureRandom.hex,
+        public_id: SecureRandom.hex
+      )
+
+      store.send(:store_keys, session_id)
+      store.send(:store_keys, session_id)
+
+      expect(redis).to have_received(:smembers).once
+    end
+  end
 end

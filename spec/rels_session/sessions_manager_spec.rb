@@ -64,6 +64,16 @@ RSpec.describe RelsSession::SessionsManager do
     end
   end
 
+  describe ".active_sessions" do
+    subject(:described_active_sessions) { described_class.active_sessions(user) }
+
+    it "returns session meta objects even when stored with string keys" do
+      expect(described_active_sessions).to all(be_a(RelsSession::SessionMeta))
+      expect(described_active_sessions.map(&:public_session_id))
+        .to include(active_session_meta[:public_session_id])
+    end
+  end
+
   describe ".record_authenticated_request" do
     let(:request) do
       double(

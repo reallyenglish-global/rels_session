@@ -32,6 +32,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "device_detector", ">= 1.0.7"
   spec.add_runtime_dependency "dry-schema", ">= 1.4.0"
   spec.add_runtime_dependency "dry-struct", ">= 1.4.0"
+  spec.add_runtime_dependency "bigdecimal", ">= 3.0"
+  spec.add_runtime_dependency "mutex_m"
+  spec.add_runtime_dependency "base64"
   spec.add_runtime_dependency "redis", ">= 5", "< 6"
 
   spec.add_development_dependency "database_cleaner-redis"

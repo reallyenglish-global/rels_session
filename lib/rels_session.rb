@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
 require "dry-struct"
 require "dry-schema"
 require "redis"
 require "connection_pool"
+require "mutex_m"
+require "base64"
 require "action_dispatch"
 
 require_relative "redis_pool"

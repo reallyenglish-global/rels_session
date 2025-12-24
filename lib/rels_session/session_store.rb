@@ -10,6 +10,8 @@ module RelsSession
       expires_after: 2 * 7 * 24 * 60 * 60
     }.freeze
 
+    SECURE_STORE_CACHE_TTL = 60 # seconds
+
     def self.sessions
       instance.list_sessions
     end
@@ -123,8 +125,17 @@ module RelsSession
     end
 
     def secure_store?
+      cache_valid = @secure_store_cached_at &&
+                    (Time.now - @secure_store_cached_at) < SECURE_STORE_CACHE_TTL
+
+      if cache_valid && !@secure_store_cached_value.nil?
+        return @secure_store_cached_value
+      end
+
       using_secure_store = @redis.then { |r| r.smembers(shared_context_key) }
-      (CLIENT_APPLICATIONS - using_secure_store).empty?
+      @secure_store_cached_value = (CLIENT_APPLICATIONS - using_secure_store).empty?
+      @secure_store_cached_at = Time.now
+      @secure_store_cached_value
     end
 
     def use_private_id?
