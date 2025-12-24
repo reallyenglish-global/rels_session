@@ -32,11 +32,8 @@ module RelsSession
     end
 
     def sessions
-      user_session_ids.map do |session_id|
-        @session_store.find_session(
-          nil, session_id
-        ).last
-      end
+      session_ids = user_session_ids
+      @session_store.find_sessions(nil, session_ids)
     end
 
     private

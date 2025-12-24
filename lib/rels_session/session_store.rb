@@ -51,6 +51,32 @@ module RelsSession
       [session_id, JSON.parse(session)]
     end
 
+    def find_sessions(_, session_ids)
+      return [] if session_ids.empty?
+
+      session_key_map = {}
+      session_ids.each do |session_id|
+        session_key_map[session_id] = store_keys(session_id)
+      end
+      keys = session_key_map.values.flatten
+
+      key_value_map = {}
+      @redis.then do |r|
+        next if keys.empty?
+
+        r.mget(*keys).each_with_index do |value, index|
+          next unless value
+
+          key_value_map[keys[index]] = value
+        end
+      end
+
+      session_ids.map do |session_id|
+        json = session_key_map.fetch(session_id).lazy.map { |key| key_value_map[key] }.find(&:itself)
+        json ? JSON.parse(json) : {}
+      end
+    end
+
     def write_session(_, session_id, session, _)
       keys = store_keys(session_id)
 

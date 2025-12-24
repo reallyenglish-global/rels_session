@@ -54,6 +54,22 @@ RSpec.describe RelsSession::SessionStore do
         expect(described_class.sessions).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
       end
     end
+
+    describe "#find_sessions" do
+      it "returns sessions for the provided ids" do
+        second_session_id = Rack::Session::SessionId.new(SecureRandom.hex)
+        store.write_session(nil, second_session_id, { "another" => "value" }, nil)
+
+        result = store.find_sessions(nil, [active_session_id, second_session_id])
+
+        expect(result).to eq(
+          [
+            { "test" => "figs" },
+            { "another" => "value" }
+          ]
+        )
+      end
+    end
   end
 
   describe "#secure_store?" do
@@ -74,6 +90,35 @@ RSpec.describe RelsSession::SessionStore do
       store.send(:store_keys, session_id)
 
       expect(redis).to have_received(:smembers).once
+    end
+  end
+
+  describe "#find_sessions" do
+    it "uses a single mget call for all session ids" do
+      store = described_class.new(nil, {})
+      redis = instance_double("Redis")
+      allow(redis).to receive(:then).and_yield(redis)
+      allow(redis).to receive(:smembers).and_return(described_class::CLIENT_APPLICATIONS)
+      store.instance_variable_set(:@redis, redis)
+
+      session_id_a = Rack::Session::SessionId.new(SecureRandom.hex)
+      session_id_b = Rack::Session::SessionId.new(SecureRandom.hex)
+
+      allow(store).to receive(:store_keys).with(session_id_a).and_return(%w[key:a:private key:a:public])
+      allow(store).to receive(:store_keys).with(session_id_b).and_return(%w[key:b:public key:b:private])
+
+      expect(redis).to receive(:mget).once.and_return(
+        ['{"test":"figs"}', nil, nil, '{"another":"value"}']
+      )
+
+      result = store.find_sessions(nil, [session_id_a, session_id_b])
+
+      expect(result).to eq(
+        [
+          { "test" => "figs" },
+          { "another" => "value" }
+        ]
+      )
     end
   end
 end
