@@ -17,6 +17,21 @@ RSpec.describe RelsSession::SessionStore do
     end
   end
 
+  describe "serializer configuration" do
+    around do |example|
+      original = RelsSession.serializer
+      example.run
+    ensure
+      RelsSession.serializer = :json
+    end
+
+    it "round-trips sessions using the Oj serializer" do
+      RelsSession.serializer = :oj
+      write_session
+      expect(find_session.last).to eq(test: "figs")
+    end
+  end
+
   context "when a session exists" do
     before do
       write_session
@@ -28,7 +43,7 @@ RSpec.describe RelsSession::SessionStore do
 
         session = find_session.last
         expect(session).to eq(
-          "test" => "figs"
+          test: "figs"
         )
       end
     end
@@ -43,9 +58,26 @@ RSpec.describe RelsSession::SessionStore do
       end
     end
 
+    describe "#delete_sessions" do
+      it "removes multiple sessions in a single call" do
+        second_session_id = Rack::Session::SessionId.new(SecureRandom.hex)
+        store.write_session(nil, second_session_id, { "another" => "value" }, nil)
+
+        store.delete_sessions(nil, [active_session_id, second_session_id])
+
+        expect(store.list_sessions).to be_empty
+      end
+    end
+
     describe "#list_sessions" do
       it "returns sessions" do
         expect(store.list_sessions).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
+      end
+
+      it "yields sessions when streaming" do
+        keys = []
+        store.list_sessions(stream: true) { |key| keys << key }
+        expect(keys).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
       end
     end
 
@@ -53,6 +85,81 @@ RSpec.describe RelsSession::SessionStore do
       it "returns sessions" do
         expect(described_class.sessions).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
       end
+    end
+
+    describe "#peek_session" do
+      it "returns the raw stored json string" do
+        expect(store.peek_session(nil, active_session_id)).to eq({ "test" => "figs" }.to_json)
+      end
+    end
+
+    describe "#find_sessions" do
+      it "returns sessions for the provided ids" do
+        second_session_id = Rack::Session::SessionId.new(SecureRandom.hex)
+        store.write_session(nil, second_session_id, { "another" => "value" }, nil)
+
+        result = store.find_sessions(nil, [active_session_id, second_session_id])
+
+        expect(result).to eq(
+          [
+            { test: "figs" },
+            { another: "value" }
+          ]
+        )
+      end
+    end
+  end
+
+  describe "#secure_store?" do
+    it "caches redis membership checks for a short period" do
+      store = described_class.new(nil, {})
+      redis = instance_double("Redis")
+      allow(redis).to receive(:then).and_yield(redis)
+      allow(redis).to receive(:set)
+      allow(redis).to receive(:exists?).and_return(true)
+
+      store.instance_variable_set(:@redis, redis)
+      session_id = instance_double(
+        Rack::Session::SessionId,
+        private_id: SecureRandom.hex,
+        public_id: SecureRandom.hex
+      )
+
+      store.send(:store_keys, session_id)
+      store.send(:store_keys, session_id)
+
+      expect(redis).to have_received(:set).once
+      expect(redis).to have_received(:exists?).once
+    end
+  end
+
+  describe "#find_sessions" do
+    it "uses a single mget call for all session ids" do
+      store = described_class.new(nil, {})
+      redis = instance_double("Redis")
+      allow(redis).to receive(:then).and_yield(redis)
+      allow(redis).to receive(:set)
+      allow(redis).to receive(:exists?).and_return(true)
+      store.instance_variable_set(:@redis, redis)
+
+      session_id_a = Rack::Session::SessionId.new(SecureRandom.hex)
+      session_id_b = Rack::Session::SessionId.new(SecureRandom.hex)
+
+      allow(store).to receive(:store_keys).with(session_id_a).and_return(%w[key:a key:a])
+      allow(store).to receive(:store_keys).with(session_id_b).and_return(%w[key:b key:b])
+
+      expect(redis).to receive(:mget).with("key:a", "key:b").once.and_return(
+        ['{"test":"figs"}', '{"another":"value"}']
+      )
+
+      result = store.find_sessions(nil, [session_id_a, session_id_b])
+
+      expect(result).to eq(
+        [
+          { test: "figs" },
+          { another: "value" }
+        ]
+      )
     end
   end
 end

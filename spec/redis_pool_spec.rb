@@ -16,9 +16,8 @@ RSpec.describe RedisPool do
       end
     end
 
-    it "retries on RedisClient::CannotConnectError" do
+    it "retries on RedisClient::CannotConnectError with jittered backoff" do
       called = false
-
       allow_any_instance_of(Redis).to receive(:set).and_wrap_original do |original, *args|
         unless called
           called = true
@@ -26,6 +25,8 @@ RSpec.describe RedisPool do
         end
         original.call(*args)
       end
+
+      allow_any_instance_of(RedisPool).to receive(:rand).and_return(0.1)
 
       expect {
         redis_pool.with { |redis| redis.set('retry-test-key', 'retry-value') }

@@ -10,6 +10,8 @@ module RelsSession
       expires_after: 2 * 7 * 24 * 60 * 60
     }.freeze
 
+    SECURE_STORE_CACHE_TTL = 60 # seconds
+
     def self.sessions
       instance.list_sessions
     end
@@ -26,16 +28,9 @@ module RelsSession
 
       @redis = redis
 
-      unless use_private_id?
-        @redis.then do |r|
-          r.sadd(
-            shared_context_key, application_name
-          )
-        end
-      end
-
       @ttl = options.fetch(:expires_after)
       @namespace = RelsSession.namespace
+      @secure_store_flag_written_at = nil
 
       super
     end
@@ -43,18 +38,49 @@ module RelsSession
     def find_session(_, session_id)
       unless session_id && (session = get_session(session_id))
         session_id = generate_sid
-        session = "{}"
+        session = RelsSession.serializer.dump({})
       end
 
-      [session_id, JSON.parse(session)]
+      [session_id, RelsSession.serializer.load(session)]
+    end
+
+    def find_sessions(_, session_ids)
+      return [] if session_ids.empty?
+
+      session_key_map = {}
+      session_ids.each do |session_id|
+        session_key_map[session_id] = store_keys(session_id)
+      end
+      keys = session_key_map.values.flatten.uniq
+
+      key_value_map = {}
+      @redis.then do |r|
+        next if keys.empty?
+
+        r.mget(*keys).each_with_index do |value, index|
+          next unless value
+
+          key_value_map[keys[index]] = value
+        end
+      end
+
+      session_ids.map do |session_id|
+        json = session_key_map.fetch(session_id).lazy.map { |key| key_value_map[key] }.find(&:itself)
+        json ? RelsSession.serializer.load(json) : {}
+      end
     end
 
     def write_session(_, session_id, session, _)
       keys = store_keys(session_id)
 
       if session
-        keys.each do |key|
-          @redis.then { |r| r.set(key, session.to_json, ex: @ttl) }
+        payload = RelsSession.serializer.dump(session)
+        @redis.then do |r|
+          r.pipelined do |pipeline|
+            keys.each do |key|
+              pipeline.set(key, payload, ex: @ttl)
+            end
+          end
         end
       else
         @redis.then { |r| r.del(*keys) }
@@ -71,18 +97,45 @@ module RelsSession
       generate_sid
     end
 
+    def delete_sessions(_, session_ids)
+      keys = session_ids.flat_map { |session_id| store_keys(session_id) }.uniq
+      return if keys.empty?
+
+      @redis.then do |r|
+        r.del(*keys)
+      end
+    end
+
     # Drop in session store for Reallyenglish rails apps.
-    def list_sessions
-      sessions = []
+    def list_sessions(stream: false)
       pattern = "#{@namespace}:2::*"
+
+      if stream
+        return enum_for(:list_sessions, stream: true) unless block_given?
+
+        @redis.then do |r|
+          cursor = "0"
+          begin
+            cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
+            keys.each { |key| yield key }
+          end while cursor != "0"
+        end
+        return
+      end
+
+      sessions = []
       @redis.then do |r|
         cursor = "0"
         begin
-          cursor, keys = r.scan(cursor, match: pattern, count: 5)
-          sessions += keys
+          cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
+          sessions.concat(keys)
         end while cursor != "0"
       end
       sessions
+    end
+
+    def peek_session(_, session_id)
+      get_session(session_id)
     end
 
     private
@@ -123,8 +176,38 @@ module RelsSession
     end
 
     def secure_store?
-      using_secure_store = @redis.then { |r| r.smembers(shared_context_key) }
-      (CLIENT_APPLICATIONS - using_secure_store).empty?
+      cache_valid = @secure_store_cached_at &&
+                    (Time.now - @secure_store_cached_at) < SECURE_STORE_CACHE_TTL
+
+      if cache_valid && !@secure_store_cached_value.nil?
+        return @secure_store_cached_value
+      end
+
+      flag_key = secure_store_flag_key
+
+      unless use_private_id?
+        if secure_flag_write_due?
+          @redis.then do |r|
+            r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
+          end
+          @secure_store_flag_written_at = Time.now
+        end
+      end
+
+      cached_value = @redis.then { |r| r.exists?(flag_key) }
+      @secure_store_cached_value = cached_value
+      @secure_store_cached_at = Time.now
+      cached_value
+    end
+
+    def secure_store_flag_key
+      [@namespace, Rack::Session::SessionId::ID_VERSION, "secure_store_enabled"].join(":")
+    end
+
+    def secure_flag_write_due?
+      return true unless @secure_store_flag_written_at
+
+      (Time.now - @secure_store_flag_written_at) >= SECURE_STORE_CACHE_TTL
     end
 
     def use_private_id?

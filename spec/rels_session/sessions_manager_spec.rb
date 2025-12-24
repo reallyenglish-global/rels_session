@@ -16,6 +16,7 @@ RSpec.describe RelsSession::SessionsManager do
   let(:user) { double(uuid: SecureRandom.uuid) }
   let(:active_session_id) { Rack::Session::SessionId.new(SecureRandom.hex) }
   let(:active_session_meta) { meta }
+  let(:devise_session) { { "meta" => active_session_meta.to_h } }
 
   let(:session_store) do
     RelsSession::SessionStore.new(
@@ -28,6 +29,12 @@ RSpec.describe RelsSession::SessionsManager do
 
   before do
     setup_sessions
+  end
+
+  describe "#initialize" do
+    it "reuses the singleton session store" do
+      expect(instance.instance_variable_get(:@session_store)).to be(RelsSession.store)
+    end
   end
 
   describe "#active_sessions" do
@@ -61,6 +68,16 @@ RSpec.describe RelsSession::SessionsManager do
 
     it "logs user out active sessions" do
       expect { logout_session }.to change { instance.active_sessions.size }.from(1).to(0)
+    end
+  end
+
+  describe ".active_sessions" do
+    subject(:described_active_sessions) { described_class.active_sessions(user) }
+
+    it "returns session meta objects even when stored with string keys" do
+      expect(described_active_sessions).to all(be_a(RelsSession::SessionMeta))
+      expect(described_active_sessions.map(&:public_session_id))
+        .to include(active_session_meta[:public_session_id])
     end
   end
 
@@ -107,9 +124,23 @@ RSpec.describe RelsSession::SessionsManager do
     end
   end
 
-  def setup_sessions
-    devise_session = { "meta" => active_session_meta.to_h }
+  describe ".logout_sessions" do
+    let(:second_session_id) { Rack::Session::SessionId.new(SecureRandom.hex) }
 
+    before do
+      session_store.write_session(nil, second_session_id, devise_session, nil)
+      RelsSession::UserSessions.new(user.uuid)
+                               .add(second_session_id.public_id)
+    end
+
+    it "logs out only the provided sessions" do
+      described_class.logout_sessions(user, [second_session_id.public_id])
+      expect(session_store.find_session(nil, second_session_id).last).to eq({})
+      expect(instance.active_sessions.size).to eq(1)
+    end
+  end
+
+  def setup_sessions
     session_store.write_session(nil, active_session_id, devise_session, nil)
 
     RelsSession::UserSessions.new(user.uuid)

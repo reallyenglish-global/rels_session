@@ -3,8 +3,8 @@
 RSpec.describe RelsSession::UserSessions do
   let(:user) { double(uuid: SecureRandom.uuid) }
 
-  let(:instance) { described_class.new(user: user) }
-  let(:instance_with_options) { described_class.new(user, expires_after: 45) }
+  let(:instance) { described_class.new(user.uuid) }
+  let(:instance_with_options) { described_class.new(user.uuid, expires_after: 45) }
   let(:session_id) { SecureRandom.hex }
 
   describe "#initialize" do
@@ -53,6 +53,29 @@ RSpec.describe RelsSession::UserSessions do
           .to(1)
         expect { remove }.not_to change(instance, :list)
       end
+    end
+  end
+
+  describe "#remove_all" do
+    let(:session_ids) { [SecureRandom.hex, SecureRandom.hex] }
+
+    before do
+      session_ids.each { |id| instance.add(id.dup) }
+    end
+
+    it "removes multiple sessions with a single pipelined call" do
+      instance.remove_all(session_ids)
+      expect(instance.list).to be_empty
+    end
+  end
+
+  describe ".list" do
+    it "yields sessions when streaming" do
+      key = [RelsSession.namespace, "user_sessions", user.uuid].join(":")
+      sessions = []
+      allow(RelsSession.redis).to receive(:then).and_yield(instance_double("Redis", scan: ["0", [key]], flushall: nil))
+      described_class.list(stream: true) { |value| sessions << value }
+      expect(sessions).to eq([key])
     end
   end
 end

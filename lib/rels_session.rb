@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
 require "dry-struct"
 require "dry-schema"
 require "redis"
 require "connection_pool"
+require "mutex_m"
+require "base64"
 require "action_dispatch"
+require "oj"
 
 require_relative "redis_pool"
 require_relative "rels_session/version"
@@ -13,6 +17,8 @@ require_relative "rels_session/session_store"
 require_relative "rels_session/session_meta"
 require_relative "rels_session/sessions_manager"
 require_relative "rels_session/user_sessions"
+require_relative "rels_session/serializer"
+require_relative "rels_session/stats"
 
 # Connect and manage user sessions across RE rails apps.
 module RelsSession
@@ -35,6 +41,9 @@ module RelsSession
     DEFAULT_SESSION_OPTIONS = {
       namespace: "rels_session"
     }.freeze
+
+    DEFAULT_SCAN_COUNT = 50
+    DEFAULT_SERIALIZER = :json
 
     def redis
       @redis ||= pool
@@ -60,6 +69,35 @@ module RelsSession
       options = redis_options
       options.delete(:namespace)
       RedisPool.new(pool_options, options)
+    end
+
+    def scan_count
+      count = ENV.fetch("RELS_SESSION_SCAN_COUNT", DEFAULT_SCAN_COUNT).to_i
+      return DEFAULT_SCAN_COUNT if count <= 0
+
+      count
+    end
+
+    def serializer
+      @serializer ||= begin
+        backend = ENV.fetch("RELS_SESSION_SERIALIZER", DEFAULT_SERIALIZER).to_sym
+        Serializers.for(backend)
+      rescue ArgumentError
+        Serializers.for(DEFAULT_SERIALIZER)
+      end
+    end
+
+    def serializer=(backend)
+      @serializer =
+        if backend.respond_to?(:dump) && backend.respond_to?(:load)
+          backend
+        else
+          Serializers.for(backend)
+        end
+    end
+
+    def stats
+      @stats ||= Stats.new
     end
 
     def pool_options

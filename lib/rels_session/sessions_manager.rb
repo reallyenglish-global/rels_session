@@ -12,7 +12,7 @@ module RelsSession
     def initialize(user)
       @user = user
       @user_sessions = RelsSession::UserSessions.new(user.uuid)
-      @session_store = RelsSession::SessionStore.new(nil, {})
+      @session_store = RelsSession.store
     end
 
     def logout_session(session_id)
@@ -20,10 +20,9 @@ module RelsSession
     end
 
     def logout_all_sessions
-      user_session_ids.each do |session_id|
-        @session_store.delete_session(nil, session_id, nil)
-      end
-
+      ids = user_session_ids
+      @session_store.delete_sessions(nil, ids)
+      user_sessions.remove_all(ids.map(&:public_id))
       user_sessions.clear
     end
 
@@ -32,11 +31,13 @@ module RelsSession
     end
 
     def sessions
-      user_session_ids.map do |session_id|
-        @session_store.find_session(
-          nil, session_id
-        ).last
-      end
+      session_ids = user_session_ids
+      @session_store.find_sessions(nil, session_ids)
+    end
+
+    def logout_sessions(session_ids)
+      @session_store.delete_sessions(nil, session_ids)
+      user_sessions.remove_all(session_ids.map(&:public_id))
     end
 
     private
@@ -60,9 +61,36 @@ module RelsSession
         new(user).logout_session(session_id)
       end
 
+      def logout_sessions(user, public_session_ids)
+        session_ids = Array(public_session_ids).map { |public_id| Rack::Session::SessionId.new(public_id) }
+        new(user).logout_sessions(session_ids)
+      end
+
       def active_sessions(user)
-        new(user).active_sessions.map do |session|
-          RelsSession::SessionMeta.new(session[:meta].symbolize_keys)
+        new(user).active_sessions.filter_map do |session|
+          meta = session["meta"] || session[:meta]
+          next unless meta
+
+          attributes = if meta.respond_to?(:symbolize_keys)
+                         meta.symbolize_keys
+                       else
+                         meta.transform_keys(&:to_sym)
+                       end
+
+          with_defaults = {
+            ip: nil,
+            browser: nil,
+            os: nil,
+            app_version: nil,
+            device_name: nil,
+            device_type: nil,
+            public_session_id: nil,
+            session_key_type: :cookie,
+            created_at: nil,
+            updated_at: nil
+          }.merge(attributes)
+
+          RelsSession::SessionMeta.new(with_defaults)
         end
       end
 
