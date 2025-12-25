@@ -127,7 +127,6 @@ Counters update automatically when sessions are added or removed through `UserSe
 - `SessionStore#write_session` pipelines mirrored key updates and `#find_sessions` deduplicates keys before `MGET`, trimming Redis chatter.
 - `secure_store?` only rewrites the enablement flag once per TTL to avoid hot loops when public IDs are in heavy use.
 - `SessionsManager#logout_all_sessions` removes session keys in bulk via `SessionStore#delete_sessions`, reducing the number of Redis calls.
-- `SessionStore#find_session(s)` parses JSON using `symbolize_names: true`, so callers avoid repeated key conversions.
 - `SessionStore.list_sessions` and `UserSessions.list` accept `stream: true` to yield keys lazily for large scans.
 - `SessionsManager.logout_sessions(user, ids)` combines `delete_sessions` with pipelined `SREM`s via `UserSessions#remove_all` for targeted bulk logouts.
 - `RelsSession.store` is a shared singleton, so processes reuse the same connection pool and secure-store cache instead of instantiating new stores.

@@ -24,7 +24,7 @@ module RelsSession
       end
 
       def load(payload)
-        JSON.parse(payload, symbolize_names: true)
+        JSON.parse(payload)
       end
     end
 
@@ -34,7 +34,7 @@ module RelsSession
       end
 
       def load(payload)
-        Oj.load(payload, symbol_keys: true)
+        Oj.load(payload)
       end
     end
   end
