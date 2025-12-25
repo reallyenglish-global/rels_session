@@ -42,6 +42,24 @@ module RelsSession
       end
     end
 
+    def reconcile!
+      total_keys = 0
+      pattern = "#{@namespace}:2::*"
+
+      @redis.then do |r|
+        cursor = "0"
+        begin
+          cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
+          total_keys += keys.size
+        end while cursor != "0"
+
+        r.multi do |m|
+          m.set(total_sessions_key, total_keys)
+          m.set(last_updated_key, Time.now.to_i)
+        end
+      end
+    end
+
     private
 
     attr_reader :redis, :namespace

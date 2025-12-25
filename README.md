@@ -115,6 +115,7 @@ RelsSession.stats.totals
 ```
 
 Counters update automatically when sessions are added or removed through `UserSessions`.
+For reconciliation, call `RelsSession.reconcile_stats!` (e.g., via a periodic job) to rescan Redis and rebuild totals when needed.
 
 ## Performance considerations
 

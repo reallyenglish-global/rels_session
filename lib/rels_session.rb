@@ -100,6 +100,10 @@ module RelsSession
       @stats ||= Stats.new
     end
 
+    def reconcile_stats!
+      stats.reconcile!
+    end
+
     def pool_options
       DEFAULT_POOL_OPTIONS.merge(
         Settings.session_store.connection_pool_options || {}
