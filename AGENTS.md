@@ -16,6 +16,7 @@ This document gives automated contributors the minimum information they need to 
 1. Use Ruby `>= 3.0.2`.
 2. Ensure a Redis server is running and reachable via `REDIS_URL` (tests default to `redis://localhost:6379/4`; `spec/redis_pool_spec.rb` hits `redis://localhost:6379/0`).
 3. Run `bin/setup` to install dependencies.
+4. Feature work often requires the Oj gem; `RELS_SESSION_SERIALIZER=oj` switches the serializer.
 
 ## Development workflow
 
@@ -37,6 +38,7 @@ This document gives automated contributors the minimum information they need to 
 - Tests rely on a clean Redis DB; never point specs at a shared production database.
 - Integration-style updates should add an RSpec example demonstrating the scenario.
 - When touching Redis reconnect behaviour, extend `spec/redis_pool_spec.rb`.
+- After session-related changes, consider reconciling stats by calling `RelsSession.reconcile_stats!` in tests or scripts when appropriate.
 
 ## Working style for AI agents
 

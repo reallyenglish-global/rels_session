@@ -55,7 +55,7 @@ end
 ### Optional environment variables
 
 - `RELS_SESSION_SCAN_COUNT` — overrides the number of keys fetched per SCAN iteration (default `50`).
-- `RELS_SESSION_SERIALIZER` — choose `json` (default) or `oj` to control how session payloads are encoded and decoded.
+- `RELS_SESSION_SERIALIZER` — choose `json` (default) or `oj` to control how session payloads are encoded and decoded. The Oj serializer is optional; set the env var only if you want the faster C-backed implementation.
 
 ## Managing sessions
 
@@ -115,7 +115,7 @@ RelsSession.stats.totals
 ```
 
 Counters update automatically when sessions are added or removed through `UserSessions`.
-For reconciliation, call `RelsSession.reconcile_stats!` (e.g., via a periodic job) to rescan Redis and rebuild totals when needed.
+For reconciliation, call `RelsSession.reconcile_stats!` (e.g., via a periodic job or manual trigger) to rescan Redis and rebuild totals when needed.
 
 ## Performance considerations
 
