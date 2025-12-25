@@ -113,7 +113,7 @@ module RelsSession
           updated_at: Time.zone.now
         )
 
-        session[:meta] = meta
+        session[:meta] = meta.to_h
 
         RelsSession::UserSessions.new(user.uuid, options.slice(:expires_after)).add(request.session.id.public_id)
       end

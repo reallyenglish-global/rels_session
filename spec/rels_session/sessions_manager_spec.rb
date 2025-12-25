@@ -82,13 +82,18 @@ RSpec.describe RelsSession::SessionsManager do
   end
 
   describe ".record_authenticated_request" do
+    let(:session_double) { double(id: active_session_id) }
     let(:request) do
       double(
         user_agent: "Chrome",
         ip: "212.139.254.49",
         env: { "HTTP_APP_VERSION" => "1.0.0" },
-        session: double(id: active_session_id, :[]= => nil)
+        session: session_double
       )
+    end
+
+    before do
+      allow(session_double).to receive(:[]=)
     end
 
     it "logs user out of all sessions" do
@@ -99,10 +104,11 @@ RSpec.describe RelsSession::SessionsManager do
     end
 
     it "logs token authenticated user" do
+      expect(session_double).to receive(:[]=).with(:meta, hash_including(:ip))
       allow(RelsSession::UserSessions).to receive(:new).and_return(double(add: nil))
       now = Time.now
       allow(Time).to receive(:now).and_return(now)
-      expect(RelsSession::SessionMeta).to receive(:new).with(
+      meta_hash = {
         browser: "Chrome",
         ip: "212.139.254.49",
         app_version: "1.0.0",
@@ -113,7 +119,10 @@ RSpec.describe RelsSession::SessionsManager do
         updated_at: now,
         os: nil,
         session_key_type: :token
-      )
+      }
+      meta_instance = instance_double(RelsSession::SessionMeta, to_h: meta_hash)
+      allow(RelsSession::SessionMeta).to receive(:new).and_return(meta_instance)
+      expect(RelsSession::SessionMeta).to receive(:new).with(**meta_hash)
       allow(Time).to receive(:zone).and_return(Time)
       described_class.record_authenticated_request(
         user, request,
