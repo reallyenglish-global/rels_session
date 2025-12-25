@@ -133,6 +133,7 @@ For reconciliation, call `RelsSession.reconcile_stats!` (e.g., via a periodic jo
 - `RelsSession.store` is a shared singleton, so processes reuse the same connection pool and secure-store cache instead of instantiating new stores.
 - All Redis hot paths (writes, deletes, session fetches) now use pipelining or bulk commands to minimize round trips.
 - `RedisPool#with` instruments retries with jitter and short-lived circuit breaking to protect the app when Redis is unavailable.
+- `RelsSession.stream_sessions(batch_size: 100) { |meta| ... }` streams all session metadata in batches, which is useful for dashboards that need to inspect every active session without building huge arrays in memory. Tune `batch_size` (defaults to `RELS_SESSION_SCAN_COUNT`) to balance throughput vs. latency.
 
 ### Additional tuning ideas
 

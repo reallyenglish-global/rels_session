@@ -79,6 +79,12 @@ RSpec.describe RelsSession::SessionStore do
         store.list_sessions(stream: true) { |key| keys << key }
         expect(keys).to eq([[RelsSession.namespace, active_session_id.private_id].join(":")])
       end
+
+      it "respects custom batch size when streaming via API" do
+        RelsSession.stream_sessions(batch_size: 1) do |session|
+          expect(session["test"]).to eq("figs")
+        end
+      end
     end
 
     describe "#sessions" do

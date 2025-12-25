@@ -61,6 +61,33 @@ module RelsSession
       SessionStore.sessions
     end
 
+    def stream_sessions(batch_size: scan_count=DEFAULT_SCAN_COUNT)
+      raise ArgumentError, "block required" unless block_given?
+
+      store = SessionStore.instance
+      batch = []
+
+      process_batch = lambda do |keys|
+        next if keys.empty?
+
+        payloads = redis.then { |r| r.mget(*keys) }
+        payloads.each do |payload|
+          next unless payload
+          yield serializer.load(payload)
+        end
+      end
+
+      store.list_sessions(stream: true) do |key|
+        batch << key
+        next if batch.size < batch_size
+
+        process_batch.call(batch)
+        batch.clear
+      end
+
+      process_batch.call(batch)
+    end
+
     def user_sessions
       UserSessions.list
     end
