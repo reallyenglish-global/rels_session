@@ -55,7 +55,7 @@ end
 ### Optional environment variables
 
 - `RELS_SESSION_SCAN_COUNT` — overrides the number of keys fetched per SCAN iteration (default `50`).
-- `RELS_SESSION_SERIALIZER` — choose `json` (default) or `oj` to control how session payloads are encoded and decoded.
+- `RELS_SESSION_SERIALIZER` — choose `json` (default) or `oj` to control how session payloads are encoded and decoded. The Oj serializer is optional; set the env var only if you want the faster C-backed implementation.
 
 ## Managing sessions
 
@@ -115,6 +115,7 @@ RelsSession.stats.totals
 ```
 
 Counters update automatically when sessions are added or removed through `UserSessions`.
+For reconciliation, call `RelsSession.reconcile_stats!` (e.g., via a periodic job or manual trigger) to rescan Redis and rebuild totals when needed.
 
 ## Performance considerations
 
@@ -132,6 +133,7 @@ Counters update automatically when sessions are added or removed through `UserSe
 - `RelsSession.store` is a shared singleton, so processes reuse the same connection pool and secure-store cache instead of instantiating new stores.
 - All Redis hot paths (writes, deletes, session fetches) now use pipelining or bulk commands to minimize round trips.
 - `RedisPool#with` instruments retries with jitter and short-lived circuit breaking to protect the app when Redis is unavailable.
+- `RelsSession.stream_sessions(batch_size: 100) { |meta| ... }` streams all session metadata in batches, which is useful for dashboards that need to inspect every active session without building huge arrays in memory. Tune `batch_size` (defaults to `RELS_SESSION_SCAN_COUNT`) to balance throughput vs. latency.
 
 ### Additional tuning ideas
 
