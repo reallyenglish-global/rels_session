@@ -71,6 +71,8 @@ RelsSession::SessionsManager.record_authenticated_request(
 )
 ```
 
+`record_authenticated_request` enriches the session metadata with the mobile headers we already emit from the apps (`AppVersion`, `X-INSTALLATION-ID`, `X-DEVICE`, `X-COURSE-ID`) and will fall back to `session["course_uuid"]`/`session["course_id"]` when those headers are absent. It also sets `client_platform` to `ios_app`, `android_app`, `mobile_web`, or `web` so downstream dashboards can quickly segment where a session originated. Consumers of `SessionMeta` can rely on these attributes being present (or `nil`) when displaying active sessions or debugging login issues.
+
 Listing active sessions for a user:
 
 ```ruby
