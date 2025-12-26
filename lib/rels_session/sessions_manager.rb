@@ -107,7 +107,7 @@ module RelsSession
         device_header = request_header(request, "X-DEVICE")
         device_name = device_header || device.device_name
         installation_id = request_header(request, "X-INSTALLATION-ID")
-        course_id = request_header(request, "X-COURSE-ID") || session_course_id(session)
+        course_id = request_header(request, "X-COURSE-ID") || SessionIntrospection.course_id(session)
         client_platform = determine_client_platform(device, installation_id, device_header)
 
         meta = RelsSession::SessionMeta.new(
@@ -126,6 +126,7 @@ module RelsSession
           updated_at: Time.zone.now
         )
 
+        session[:course_id] = course_id if course_id
         session[:meta] = meta.to_h
 
         RelsSession::UserSessions.new(user.uuid, options.slice(:expires_after)).add(request.session.id.public_id)
@@ -157,20 +158,6 @@ module RelsSession
         nil
       end
 
-      def session_course_id(session)
-        [
-          "course_uuid",
-          :course_uuid,
-          "course_id",
-          :course_id
-        ].each do |key|
-          value = session_value(session, key)
-          return value if value
-        end
-
-        nil
-      end
-
       def request_ip(request)
         remote_ip = begin
           request.remote_ip if request.respond_to?(:remote_ip)
@@ -179,14 +166,6 @@ module RelsSession
         end
 
         presence(remote_ip) || request.ip
-      end
-
-      def session_value(session, key)
-        return unless session.respond_to?(:[])
-
-        presence(session[key])
-      rescue KeyError, NoMethodError
-        nil
       end
 
       def request_env(request)
@@ -251,6 +230,7 @@ module RelsSession
         normalized = value.downcase
         needles.any? { |needle| normalized.include?(needle) }
       end
+
     end
   end
 end

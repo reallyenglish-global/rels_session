@@ -71,13 +71,21 @@ RelsSession::SessionsManager.record_authenticated_request(
 )
 ```
 
-`record_authenticated_request` enriches the session metadata with the mobile headers we already emit from the apps (`AppVersion`, `X-INSTALLATION-ID`, `X-DEVICE`, `X-COURSE-ID`) and will fall back to `session["course_uuid"]`/`session["course_id"]` when those headers are absent. It also sets `client_platform` to `ios_app`, `android_app`, `mobile_web`, or `web` so downstream dashboards can quickly segment where a session originated. Consumers of `SessionMeta` can rely on these attributes being present (or `nil`) when displaying active sessions or debugging login issues.
+`record_authenticated_request` enriches the session metadata with the mobile headers we already emit from the apps (`AppVersion`, `X-INSTALLATION-ID`, `X-DEVICE`, `X-COURSE-ID`) and will fall back to `session["course_uuid"]`/`session["course_id"]` when those headers are absent. It also sets `client_platform` to `ios_app`, `android_app`, `mobile_web`, or `web` so dashboards can quickly segment where a session originated. When a course id is available, it is persisted both in the metadata and at the session root (`session[:course_id]`) for quick access.
 
 Listing active sessions for a user:
 
 ```ruby
 RelsSession::SessionsManager.active_sessions(current_user).each do |session|
   puts "Session #{session.public_session_id} from #{session.ip}"
+end
+```
+
+The lower-level streaming helper also accepts stage filters (`:anonymous`, `:authenticated`, `:in_course`):
+
+```ruby
+RelsSession.stream_sessions(stage: :in_course) do |session|
+  # ...
 end
 ```
 

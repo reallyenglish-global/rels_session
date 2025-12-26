@@ -83,6 +83,7 @@ RSpec.describe RelsSession::SessionsManager do
       expect(described_active_sessions.map(&:public_session_id))
         .to include(active_session_meta[:public_session_id])
     end
+
   end
 
   describe ".record_authenticated_request" do
@@ -134,6 +135,7 @@ RSpec.describe RelsSession::SessionsManager do
     it "logs user out of all sessions" do
       described_class.record_authenticated_request(user, request, expires_after: 45)
       expect(RelsSession::UserSessions).to have_received(:new).with(user.uuid, expires_after: 45)
+      expect(session_data[:course_id]).to eq("course-789")
     end
 
     it "logs token authenticated user" do
@@ -175,6 +177,7 @@ RSpec.describe RelsSession::SessionsManager do
       it "falls back to the session for course ids" do
         described_class.record_authenticated_request(user, request)
         expect(session_data[:meta][:course_id]).to eq("course-from-session")
+        expect(session_data[:course_id]).to eq("course-from-session")
       end
     end
 
