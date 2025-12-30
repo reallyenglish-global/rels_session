@@ -10,7 +10,7 @@ module RelsSession
     attribute :device_name, Types::String.optional
     attribute :device_type, Types::String.optional
     attribute :installation_id, Types::String.optional
-    attribute :course_id, Types::String.optional
+    attribute :course_id, Types::Coercible::String.optional
     attribute :client_platform, Types::String.optional
     attribute :public_session_id, Types::Coercible::String
     attribute :session_key_type, Types::Coercible::Symbol.enum(*%i[cookie token])
