@@ -15,6 +15,7 @@ require_relative "rels_session/version"
 require_relative "rels_session/types"
 require_relative "rels_session/session_store"
 require_relative "rels_session/session_meta"
+require_relative "rels_session/session_introspection"
 require_relative "rels_session/sessions_manager"
 require_relative "rels_session/user_sessions"
 require_relative "rels_session/serializer"
@@ -61,11 +62,12 @@ module RelsSession
       SessionStore.sessions
     end
 
-    def stream_sessions(batch_size: scan_count=DEFAULT_SCAN_COUNT)
+    def stream_sessions(batch_size: scan_count=DEFAULT_SCAN_COUNT, stage: nil)
       raise ArgumentError, "block required" unless block_given?
 
       store = SessionStore.instance
       batch = []
+      stage_filter = stage ? SessionIntrospection.normalize_stage(stage) : nil
 
       process_batch = lambda do |keys|
         next if keys.empty?
@@ -73,7 +75,10 @@ module RelsSession
         payloads = redis.then { |r| r.mget(*keys) }
         payloads.each do |payload|
           next unless payload
-          yield serializer.load(payload)
+          session_payload = serializer.load(payload)
+          next if stage_filter && SessionIntrospection.stage(session_payload) != stage_filter
+
+          yield session_payload
         end
       end
 

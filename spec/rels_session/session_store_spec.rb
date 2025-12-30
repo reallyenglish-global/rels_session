@@ -85,6 +85,34 @@ RSpec.describe RelsSession::SessionStore do
           expect(session["test"]).to eq("figs")
         end
       end
+
+      it "filters streamed sessions by stage" do
+        in_course_id = Rack::Session::SessionId.new(SecureRandom.hex)
+        signed_in_payload = {
+          "warden.user.user.key" => [[SecureRandom.random_number(10)], "token"],
+          "course_id" => "course-123",
+          "meta" => { "course_id" => "course-123" }
+        }
+        store.write_session(nil, in_course_id, signed_in_payload, nil)
+
+        anonymous_ids = []
+        RelsSession.stream_sessions(stage: :anonymous) do |session|
+          anonymous_ids << session["course_id"]
+        end
+        expect(anonymous_ids).to eq([nil])
+
+        course_ids = []
+        RelsSession.stream_sessions(stage: :in_course, batch_size: 1) do |session|
+          course_ids << session["course_id"]
+        end
+        expect(course_ids).to eq(["course-123"])
+      end
+
+      it "raises when stream filtering uses an unknown stage" do
+        expect do
+          RelsSession.stream_sessions(stage: :bogus) { |_| }
+        end.to raise_error(ArgumentError)
+      end
     end
 
     describe "#sessions" do
