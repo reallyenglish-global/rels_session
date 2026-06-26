@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 class RedisPool
   MAX_RETRIES = 3
   BACKOFF_BASE = 0.5 # seconds
   BACKOFF_MAX = 5 # seconds
 
   def initialize(pool_options, redis_options)
-    @pool = ConnectionPool.new(pool_options) do
+    @pool = ConnectionPool.new(**pool_options) do
       ::Redis.new(redis_options)
     end
     @failure_count = 0
@@ -17,9 +19,8 @@ class RedisPool
     retries = 0
 
     @pool.with do |redis|
-      begin
-        yield(redis)
-      rescue RedisClient::FailoverError, RedisClient::CannotConnectError => e
+      yield(redis)
+    rescue RedisClient::FailoverError, RedisClient::CannotConnectError => e
         retries += 1
         if retries <= MAX_RETRIES
           warn "[RedisPool] Redis connection lost: #{e.class} #{e.message}. Reconnecting (attempt #{retries})..."
@@ -30,7 +31,6 @@ class RedisPool
           record_failure
           raise e
         end
-      end
     end
   rescue RedisClient::FailoverError, RedisClient::CannotConnectError => e
     record_failure

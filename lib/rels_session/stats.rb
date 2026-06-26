@@ -48,10 +48,11 @@ module RelsSession
 
       @redis.then do |r|
         cursor = "0"
-        begin
+        loop do
           cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
           total_keys += keys.size
-        end while cursor != "0"
+          break unless cursor != "0"
+        end
 
         r.multi do |m|
           m.set(total_sessions_key, total_keys)

@@ -28,7 +28,7 @@ RSpec.describe RelsSession::SessionStore do
     it "round-trips sessions using the Oj serializer" do
       RelsSession.serializer = :oj
       write_session
-      expect(find_session.last).to eq("test"=> "figs")
+      expect(find_session.last).to eq("test" => "figs")
     end
   end
 
@@ -43,7 +43,7 @@ RSpec.describe RelsSession::SessionStore do
 
         session = find_session.last
         expect(session).to eq(
-          "test"=> "figs"
+          "test" => "figs"
         )
       end
     end
@@ -136,8 +136,8 @@ RSpec.describe RelsSession::SessionStore do
 
         expect(result).to eq(
           [
-            { "test"=> "figs" },
-            { "another"=> "value" }
+            { "test" => "figs" },
+            { "another" => "value" }
           ]
         )
       end
@@ -190,8 +190,8 @@ RSpec.describe RelsSession::SessionStore do
 
       expect(result).to eq(
         [
-          { "test"=> "figs" },
-          { "another"=> "value" }
+          { "test" => "figs" },
+          { "another" => "value" }
         ]
       )
     end
