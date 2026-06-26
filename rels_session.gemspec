@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "actionpack", ">= 7.0.2.4", "<= 9"
-  spec.add_runtime_dependency "connection_pool", ">= 2.2.5", "< 3"
+  spec.add_runtime_dependency "connection_pool", ">= 2.2.5", "< 4"
   spec.add_runtime_dependency "device_detector", ">= 1.0.7"
   spec.add_runtime_dependency "dry-schema", ">= 1.4.0"
   spec.add_runtime_dependency "dry-struct", ">= 1.4.0"

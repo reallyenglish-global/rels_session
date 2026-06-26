@@ -4,7 +4,7 @@ class RedisPool
   BACKOFF_MAX = 5 # seconds
 
   def initialize(pool_options, redis_options)
-    @pool = ConnectionPool.new(pool_options) do
+    @pool = ConnectionPool.new(**pool_options) do
       ::Redis.new(redis_options)
     end
     @failure_count = 0
