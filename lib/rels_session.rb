@@ -62,7 +62,7 @@ module RelsSession
       SessionStore.sessions
     end
 
-    def stream_sessions(batch_size: scan_count=DEFAULT_SCAN_COUNT, stage: nil)
+    def stream_sessions(batch_size: scan_count = DEFAULT_SCAN_COUNT, stage: nil)
       raise ArgumentError, "block required" unless block_given?
 
       store = SessionStore.instance
@@ -75,6 +75,7 @@ module RelsSession
         payloads = redis.then { |r| r.mget(*keys) }
         payloads.each do |payload|
           next unless payload
+
           session_payload = serializer.load(payload)
           next if stage_filter && SessionIntrospection.stage(session_payload) != stage_filter
 

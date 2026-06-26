@@ -107,7 +107,7 @@ module RelsSession
     end
 
     # Drop in session store for Reallyenglish rails apps.
-    def list_sessions(stream: false)
+    def list_sessions(stream: false, &block)
       pattern = "#{@namespace}:2::*"
 
       if stream
@@ -115,10 +115,11 @@ module RelsSession
 
         @redis.then do |r|
           cursor = "0"
-          begin
+          loop do
             cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
-            keys.each { |key| yield key }
-          end while cursor != "0"
+            keys.each(&block)
+            break unless cursor != "0"
+          end
         end
         return
       end
@@ -126,10 +127,11 @@ module RelsSession
       sessions = []
       @redis.then do |r|
         cursor = "0"
-        begin
+        loop do
           cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
           sessions.concat(keys)
-        end while cursor != "0"
+          break unless cursor != "0"
+        end
       end
       sessions
     end
@@ -179,19 +181,15 @@ module RelsSession
       cache_valid = @secure_store_cached_at &&
                     (Time.now - @secure_store_cached_at) < SECURE_STORE_CACHE_TTL
 
-      if cache_valid && !@secure_store_cached_value.nil?
-        return @secure_store_cached_value
-      end
+      return @secure_store_cached_value if cache_valid && !@secure_store_cached_value.nil?
 
       flag_key = secure_store_flag_key
 
-      unless use_private_id?
-        if secure_flag_write_due?
-          @redis.then do |r|
-            r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
-          end
-          @secure_store_flag_written_at = Time.now
+      if !use_private_id? && secure_flag_write_due?
+        @redis.then do |r|
+          r.set(flag_key, Time.now.to_i, ex: SECURE_STORE_CACHE_TTL, nx: true)
         end
+          @secure_store_flag_written_at = Time.now
       end
 
       cached_value = @redis.then { |r| r.exists?(flag_key) }

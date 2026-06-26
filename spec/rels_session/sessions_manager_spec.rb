@@ -83,7 +83,6 @@ RSpec.describe RelsSession::SessionsManager do
       expect(described_active_sessions.map(&:public_session_id))
         .to include(active_session_meta[:public_session_id])
     end
-
   end
 
   describe ".record_authenticated_request" do

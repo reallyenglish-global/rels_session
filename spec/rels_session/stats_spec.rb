@@ -17,7 +17,9 @@ RSpec.describe RelsSession::Stats do
   describe "#reconcile!" do
     it "recomputes totals from actual session keys" do
       redis_double = instance_double("Redis")
-      allow(redis_double).to receive(:scan).and_return(["0", ["#{RelsSession.namespace}:2:abc", "#{RelsSession.namespace}:2:def"]])
+      allow(redis_double).to receive(:scan).and_return(["0",
+                                                        ["#{RelsSession.namespace}:2:abc",
+                                                         "#{RelsSession.namespace}:2:def"]])
       allow(redis_double).to receive(:multi).and_yield(double(set: true))
       allow(redis_double).to receive(:get).and_return("2", Time.now.to_i.to_s)
       proxy = Object.new

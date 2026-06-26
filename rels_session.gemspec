@@ -28,20 +28,20 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "actionpack", ">= 7.0.2.4", "<= 9"
+  spec.add_runtime_dependency "base64"
+  spec.add_runtime_dependency "bigdecimal", ">= 3.0"
   spec.add_runtime_dependency "connection_pool", ">= 2.2.5", "< 4"
   spec.add_runtime_dependency "device_detector", ">= 1.0.7"
   spec.add_runtime_dependency "dry-schema", ">= 1.4.0"
   spec.add_runtime_dependency "dry-struct", ">= 1.4.0"
-  spec.add_runtime_dependency "bigdecimal", ">= 3.0"
   spec.add_runtime_dependency "mutex_m"
-  spec.add_runtime_dependency "base64"
   spec.add_runtime_dependency "oj", ">= 3.13"
   spec.add_runtime_dependency "redis", ">= 5", "< 6"
 
   spec.add_development_dependency "database_cleaner-redis"
+  spec.add_development_dependency "debug", "~> 1.11"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.0"
-  spec.add_development_dependency "debug", "~> 1.11"
   spec.add_development_dependency "rubocop", "~> 1.27"
   spec.add_development_dependency "rubocop-rake", "~> 0.6"
   spec.add_development_dependency "rubocop-rspec", "~> 2.8"

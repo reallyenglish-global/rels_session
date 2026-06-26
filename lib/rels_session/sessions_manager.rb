@@ -204,6 +204,7 @@ module RelsSession
         if installation_id
           return "ios_app" if ios_device?(device, device_header)
           return "android_app" if android_device?(device, device_header)
+
           return "mobile_app"
         end
 
@@ -230,7 +231,6 @@ module RelsSession
         normalized = value.downcase
         needles.any? { |needle| normalized.include?(needle) }
       end
-
     end
   end
 end

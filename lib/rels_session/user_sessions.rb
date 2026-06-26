@@ -3,7 +3,7 @@
 module RelsSession
   # Add and remove user sessions, outside of rails app. Used by session_store
   class UserSessions
-    def self.list(stream: false)
+    def self.list(stream: false, &block)
       pattern = "#{RelsSession.namespace}:user_sessions:*"
 
       if stream
@@ -11,10 +11,11 @@ module RelsSession
 
         RelsSession.redis.then do |r|
           cursor = "0"
-          begin
+          loop do
             cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
-            keys.each { |key| yield key }
-          end while cursor != "0"
+            keys.each(&block)
+            break unless cursor != "0"
+          end
         end
         return
       end
@@ -22,10 +23,11 @@ module RelsSession
       sessions = []
       RelsSession.redis.then do |r|
         cursor = "0"
-        begin
+        loop do
           cursor, keys = r.scan(cursor, match: pattern, count: RelsSession.scan_count)
           sessions.concat(keys)
-        end while cursor != "0"
+          break unless cursor != "0"
+        end
       end
       sessions
     end

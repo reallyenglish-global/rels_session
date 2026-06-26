@@ -3,7 +3,7 @@
 module RelsSession
   # Helpers to infer attributes from serialized session payloads.
   module SessionIntrospection
-    extend self
+    module_function
 
     STAGES = %i[anonymous authenticated in_course].freeze
     COURSE_KEYS = %i[course_id course_uuid].freeze
