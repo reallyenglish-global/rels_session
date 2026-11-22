@@ -1,0 +1,52 @@
+name: Reek advisory
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - '.reek.yml'
+      - '.github/workflows/reek.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reek:
+    # ubuntu-latest moved to 26.04, where Ruby 3.4.8 is unavailable.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18
+        with:
+          ruby-version: '3.4.8'
+      - name: Install Reek
+        run: gem install reek --version 6.6.0 --no-document
+      - name: Scan library code
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          sources=(lib/**/*.rb)
+          if (( ${#sources[@]} == 0 )); then
+            echo 'Reek did not run: no Ruby files in lib/.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          diagnostics=$(mktemp)
+          trap 'rm -f "$diagnostics"' EXIT
+          status=0
+          reek lib 2>"$diagnostics" || status=$?
+          # Reek 6.6.0 can emit a parse error and still exit zero.
+          if [[ -s "$diagnostics" ]]; then
+            cat "$diagnostics" >&2
+            echo 'Reek emitted scanner diagnostics. Do not treat this as a clean scan.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          case "$status" in
+            0) echo 'Reek found no smells in lib/.' >> "$GITHUB_STEP_SUMMARY" ;;
+            2) echo 'Reek reported advisory smells in lib/. See the scan log; this is a full snapshot, not a PR-only delta.' >> "$GITHUB_STEP_SUMMARY" ;;
+            *) echo "Reek scan failed (exit $status). Do not treat this as a clean scan." >> "$GITHUB_STEP_SUMMARY"
+               exit "$status" ;;
+          esac
